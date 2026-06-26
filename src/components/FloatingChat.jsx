@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "../config";
 import { MessageSquare, X, Send, Users, Image as ImageIcon, Loader2, RefreshCw, ChevronDown } from "lucide-react";
+const EMPTY_CONTACTS = [];
 export default function FloatingChat({
   token,
   user,
-  userRole
+  userRole,
+  extraContacts = EMPTY_CONTACTS
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
@@ -18,6 +20,7 @@ export default function FloatingChat({
   const [loadingThread, setLoadingThread] = useState(false);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const pollRef = useRef(null);
   const isClient = userRole === "Client";
@@ -40,13 +43,13 @@ export default function FloatingChat({
             role: "Company Admin",
             type: "Admin",
             avatarColor: "#4f46e5"
-          }, ...staff.map(s => ({
-            name: s.name,
-            email: s.email,
-            role: "Project Staff",
+          }, ...staff.map((s, index) => ({
+            name: typeof s === "object" ? s.name || s.email : `Project Staff ${index + 1}`,
+            email: typeof s === "object" ? s.email : s,
+            role: typeof s === "object" ? s.role || "Project Staff" : "Project Staff",
             type: "Staff",
             avatarColor: "#6366f1"
-          }))];
+          })).filter(c => c.email)];
           setContacts(clientContacts);
           if (!selectedContact && clientContacts.length > 0) {
             setSelectedContact(clientContacts[0]);
@@ -60,7 +63,23 @@ export default function FloatingChat({
         });
         const data = await response.json();
         if (data.success) {
-          const fetchedContacts = data.data;
+          const merged = [...(data.data || []), ...extraContacts];
+          const byEmail = new Map();
+          merged.forEach(contact => {
+            if (!contact?.email) return;
+            const emailKey = contact.email.toLowerCase();
+            if (emailKey === user?.email?.toLowerCase()) return;
+            if (!byEmail.has(emailKey)) {
+              byEmail.set(emailKey, {
+                name: contact.name || contact.email,
+                email: contact.email,
+                role: contact.role || contact.domain || "Employee",
+                type: contact.type || "Staff",
+                avatarColor: contact.avatarColor || "#6366f1"
+              });
+            }
+          });
+          const fetchedContacts = Array.from(byEmail.values());
           setContacts(fetchedContacts);
           const generalContact = {
             name: "General Team Channel",
@@ -88,7 +107,13 @@ export default function FloatingChat({
         const response = await fetch(`${API_BASE_URL}/api/client-share/${token}/messages`);
         const data = await response.json();
         if (data.success) {
-          const filtered = data.data.filter(m => m.sender?.toLowerCase() === contactEmail.toLowerCase() || m.receiver?.toLowerCase() === contactEmail.toLowerCase());
+          const contactKey = contactEmail.toLowerCase();
+          const clientKey = user?.email?.toLowerCase();
+          const filtered = data.data.filter(m => {
+            const sender = m.sender?.toLowerCase();
+            const receiver = m.receiver?.toLowerCase();
+            return (sender === clientKey && receiver === contactKey) || (sender === contactKey && receiver === clientKey);
+          });
           setMessages(filtered);
         }
       } else {
@@ -112,7 +137,7 @@ export default function FloatingChat({
     if (isOpen) {
       fetchContacts();
     }
-  }, [isOpen, userRole]);
+  }, [isOpen, userRole, extraContacts]);
   useEffect(() => {
     if (isOpen && selectedContact) {
       fetchThread(selectedContact.email, true);
@@ -124,11 +149,15 @@ export default function FloatingChat({
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [isOpen, selectedContact]);
+  const msgCount = messages.length;
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }, [messages, isOpen]);
+    if (isOpen && chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [msgCount, isOpen]);
   const handleImageChange = e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -207,10 +236,10 @@ export default function FloatingChat({
                   setShowDropdown(false);
                 }} className={`w-full p-2 rounded-xl flex items-center space-x-2.5 text-left font-semibold cursor-pointer transition-all border ${selectedContact?.email === c.email ? "bg-indigo-50/60 dark:bg-indigo-950/20 border-indigo-500/30 text-indigo-600 dark:text-indigo-400" : "bg-slate-50 dark:bg-slate-850/50 hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-350"}`}> <div className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold shrink-0 text-[10px]" style={{
                     backgroundColor: c.avatarColor || "#10b981"
-                  }}> {c.name[0].toUpperCase()} </div> <div className="truncate"> <div className="text-xs font-bold truncate max-w-[200px]">{c.name}</div> <div className="text-[9px] text-slate-450 dark:text-slate-450 uppercase tracking-wider">Client</div> </div> </button>)} </div> </div>} </div> </div>} </div> {} <div className="flex-1 flex flex-col min-h-0 bg-slate-50/20 dark:bg-slate-900/10"> {} <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 text-left"> {loadingThread ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500"> <Loader2 size={20} className="animate-spin text-indigo-500 mb-1" /> Loading messages... </div> : !selectedContact ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-10"> Select a contact from the dropdown to start chatting. </div> : messages.length === 0 ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-555 py-10"> No messages in this chat. </div> : messages.map((m, idx) => {
+                  }}> {c.name[0].toUpperCase()} </div> <div className="truncate"> <div className="text-xs font-bold truncate max-w-[200px]">{c.name}</div> <div className="text-[9px] text-slate-450 dark:text-slate-450 uppercase tracking-wider">Client</div> </div> </button>)} </div> </div>} </div> </div>} </div> {} <div className="flex-1 flex flex-col min-h-0 bg-slate-50/20 dark:bg-slate-900/10"> {} <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 text-left"> {loadingThread ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500"> <Loader2 size={20} className="animate-spin text-indigo-500 mb-1" /> Loading messages... </div> : !selectedContact ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 py-10"> Select a contact from the dropdown to start chatting. </div> : messages.length === 0 ? <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-555 py-10"> No messages in this chat. </div> : messages.map((m, idx) => {
             const isMe = m.sender?.toLowerCase() === user?.email?.toLowerCase();
             return <div key={idx} className={`flex flex-col max-w-[80%] ${isMe ? "ml-auto items-end" : "mr-auto items-start"}`}> {!isMe && <span className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 mb-0.5 ml-1"> {m.senderName} </span>} <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed font-semibold shadow-sm ${isMe ? "bg-indigo-650 text-white rounded-br-none" : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-750 rounded-bl-none"}`}> {m.imageUrl && <img src={m.imageUrl} alt="attached" className="max-w-full rounded-lg mb-1 object-cover max-h-32" />} {m.text && <div className="break-words">{m.text}</div>} </div> </div>;
-          })} <div ref={messagesEndRef} /> </div> {} {imagePreview && <div className="px-4 py-1.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/50 flex items-center gap-2"> <img src={imagePreview} alt="upload" className="h-10 w-10 object-cover rounded-lg" /> <button onClick={() => {
+          })} </div> {} {imagePreview && <div className="px-4 py-1.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/50 flex items-center gap-2"> <img src={imagePreview} alt="upload" className="h-10 w-10 object-cover rounded-lg" /> <button onClick={() => {
             setImageFile(null);
             setImagePreview(null);
           }} className="text-red-500 hover:text-red-650 cursor-pointer"> <X size={12} /> </button> </div>} {} {selectedContact && <form onSubmit={handleSend} className="p-3 bg-white dark:bg-slate-900 border-t border-slate-150 dark:border-slate-800 flex items-center gap-2 shrink-0"> <input type="text" placeholder={`Message ${selectedContact.name}...`} value={text} onChange={e => setText(e.target.value)} className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold" /> <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleImageChange} /> <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-indigo-500 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer transition-colors" title="Share Image"> <ImageIcon size={13} /> </button> <button type="submit" disabled={sending || !text.trim() && !imageFile} className="p-2 bg-indigo-650 hover:bg-indigo-700 text-white rounded-lg shadow-sm cursor-pointer transition-colors"> {sending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} </button> </form>} </div> </div>} </div>;

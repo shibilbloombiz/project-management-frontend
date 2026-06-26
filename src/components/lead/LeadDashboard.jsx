@@ -4,6 +4,7 @@ import { Layers, Briefcase, CheckSquare, Users, Clock, BarChart3, Bell, ShieldCh
 import LeadSidebar from "./LeadSidebar";
 import NotificationsDropdown from "../NotificationsDropdown";
 import FloatingChat from "../FloatingChat";
+import ThemeToggle from "../ThemeToggle";
 export default function LeadDashboard({
   userEmail,
   companyId,

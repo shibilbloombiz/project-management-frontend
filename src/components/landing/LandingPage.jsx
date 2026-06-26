@@ -14,7 +14,7 @@ export default function LandingPage({
   onLogin,
 }) {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       <Navbar onStartTrial={onStartTrial} onLogin={onLogin} />
 
       <main className="flex-grow">

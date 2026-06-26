@@ -12,6 +12,7 @@ export default function CompanyBillingPanel({
   payments,
   onViewInvoice,
   plans = [],
+  onChangePlan,
 }) {
   return (
     <div className="space-y-6 text-left animate-fade-in">
@@ -31,7 +32,7 @@ export default function CompanyBillingPanel({
             <span className="px-3 py-1 bg-slate-100 dark:bg-slate-855 text-slate-650 dark:text-slate-300 text-xs font-bold rounded-full">{companyDetails?.users || 5} Seats limit</span>
           </div>
         </div>
-
+ 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5">
           <div className="space-y-1">
             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest block font-display">Monthly Cost</span>
@@ -48,7 +49,12 @@ export default function CompanyBillingPanel({
               <input type="checkbox" checked={companyDetails?.autopay !== false} onChange={() => onToggleAutopay(companyDetails?.autopay !== false)} />
             </div>
           </div>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-end gap-3">
+            {onChangePlan && (
+              <button onClick={onChangePlan} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer border border-transparent shadow-sm">
+                Change Plan
+              </button>
+            )}
             <button onClick={onToggleEditing} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-250 text-xs font-bold rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700">
               {isEditingBilling ? 'Cancel Edit' : 'Edit Billing Details'}
             </button>

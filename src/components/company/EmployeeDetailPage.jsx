@@ -5,11 +5,27 @@ import { ArrowLeft, User, Briefcase, CheckCircle2, Clock, Calendar, Download } f
 const STATUS_COLORS = {
   Done: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   QA: 'bg-blue-50 text-blue-700 border-blue-200',
+  Review: 'bg-blue-50 text-blue-700 border-blue-200',
   Dev: 'bg-amber-50 text-amber-700 border-amber-200',
+  'In Progress': 'bg-amber-50 text-amber-700 border-amber-200',
   Planning: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
 const BASE = API_BASE_URL;
+
+const normalizeEmail = (value) => (typeof value === 'string' ? value.trim().toLowerCase() : '');
+
+const isEmailMatch = (left, right) => {
+  const normalizedLeft = normalizeEmail(left);
+  const normalizedRight = normalizeEmail(right);
+  return Boolean(normalizedLeft && normalizedRight && normalizedLeft === normalizedRight);
+};
+
+const getTaskBucket = (status) => {
+  if (status === 'In Progress') return 'Dev';
+  if (status === 'Review') return 'QA';
+  return status;
+};
 
 export default function EmployeeDetailPage({ employee, token, onBack, attendance, leaves }) {
   const [tasks, setTasks] = useState([]);
@@ -22,16 +38,16 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
       .then(r => r.json())
       .then(res => {
         if (!res.success) return;
-        const empEmail = employee.email?.toLowerCase();
+        const empEmail = normalizeEmail(employee.email);
         const myProjects = res.data.filter(p =>
-          (p.assignedStaff || []).some(s => s.toLowerCase() === empEmail) ||
-          (p.tasks || []).some(t => t.assigneeEmail?.toLowerCase() === empEmail)
+          (p.assignedStaff || []).some(s => isEmailMatch(s, empEmail)) ||
+          (p.tasks || []).some(t => isEmailMatch(t.assigneeEmail, empEmail))
         );
         setProjects(myProjects);
         const myTasks = [];
         myProjects.forEach(p =>
           (p.tasks || []).forEach(t => {
-            if (t.assigneeEmail?.toLowerCase() === empEmail) {
+            if (isEmailMatch(t.assigneeEmail, empEmail)) {
               myTasks.push({ ...t, projectName: p.name, projectId: p._id || p.id });
             }
           })
@@ -41,8 +57,8 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
       .catch(err => console.error(err));
   }, [employee, token]);
 
-  const empAttendance = attendance.filter(a => a.email?.toLowerCase() === employee.email?.toLowerCase());
-  const empLeaves = leaves.filter(l => l.email?.toLowerCase() === employee.email?.toLowerCase());
+  const empAttendance = attendance.filter(a => isEmailMatch(a.email, employee.email));
+  const empLeaves = leaves.filter(l => isEmailMatch(l.email, employee.email));
   const doneTasks = tasks.filter(t => t.status === 'Done');
   const pendingTasks = tasks.filter(t => t.status !== 'Done');
   const progress = tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
@@ -141,10 +157,12 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
             </div>
             <div className="w-full space-y-1">
               {['Planning', 'Dev', 'QA', 'Done'].map(s => {
-                const count = tasks.filter(t => t.status === s).length;
+                const count = tasks.filter(t => getTaskBucket(t.status) === s).length;
                 return (
                   <div key={s} className="flex justify-between text-[11px]">
-                    <span className={`px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[s]}`}>{s}</span>
+                    <span className={`px-2 py-0.5 rounded-full border font-bold ${STATUS_COLORS[s]}`}>
+                      {s === 'Dev' ? 'Dev / In Progress' : s === 'QA' ? 'QA / Review' : s}
+                    </span>
                     <span className="font-bold text-slate-600">{count}</span>
                   </div>
                 );
@@ -169,6 +187,26 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
             <span className="text-slate-400">Total Days</span>
             <span className="text-slate-700">{empAttendance.length}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Assigned Projects */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center">
+          <Briefcase size={13} className="mr-2 text-indigo-500" />Assigned Projects
+          <span className="ml-2 bg-indigo-50 text-indigo-600 text-[10px] px-2 py-0.5 rounded-full border border-indigo-100 font-bold">{projects.length} total</span>
+        </h3>
+        {projects.length === 0 && <p className="text-xs text-slate-400 text-center py-6">No projects assigned.</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {projects.map((p, i) => (
+            <div key={p._id || p.id || i} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+              <div>
+                <p className="text-xs font-extrabold text-slate-800">{p.name}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{p.currentPhase || 'Planning'}</p>
+              </div>
+              <span className={`px-2 py-0.5 text-[10px] rounded-full border font-bold ${p.status === 'Completed' || p.status === 'Done' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>{p.status}</span>
+            </div>
+          ))}
         </div>
       </div>
 

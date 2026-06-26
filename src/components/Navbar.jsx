@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X, Layers } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar({ onStartTrial, onLogin }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +40,7 @@ export default function Navbar({ onStartTrial, onLogin }) {
 
           {/* Action Buttons */}
           <div className="hidden md:flex items-center space-x-3">
+            <ThemeToggle compact />
             <button 
               onClick={onLogin}
               className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-indigo-600 hover:bg-slate-50 border border-slate-200/80 rounded-full transition-all cursor-pointer"
@@ -106,6 +108,7 @@ export default function Navbar({ onStartTrial, onLogin }) {
               Pricing
             </a>
             <div className="pt-4 px-3 space-y-2">
+              <ThemeToggle />
               <button 
                 onClick={() => {
                   setIsOpen(false);

@@ -265,6 +265,7 @@ function App() {
           initialOrg={org}
           onLogout={handleLogout}
           onClickProfile={() => { setView('profile'); sessionStorage.setItem('syncra_view', 'profile'); }}
+          onChangePlan={() => { setView('plan-selection'); sessionStorage.setItem('syncra_view', 'plan-selection'); }}
         />
       );
     } else if (userRole === 'Project Lead' || userRole === 'project_lead') {

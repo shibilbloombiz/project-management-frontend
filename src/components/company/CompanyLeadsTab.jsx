@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import ProjectLeadsCrud from './ProjectLeadsCrud';
-import EmployeeLeadsCrud from './EmployeeLeadsCrud';
+import ClientLeadsCrud from './ClientLeadsCrud';
 import { Briefcase, Users, LayoutDashboard } from 'lucide-react';
 
-export default function CompanyLeadsTab({ companyId, token }) {
-  const [subTab, setSubTab] = useState('projects'); // 'projects' | 'employees'
+export default function CompanyLeadsTab({ companyId, token, onRefresh }) {
+  const [subTab, setSubTab] = useState('projects'); // 'projects' | 'clients'
 
   return (
     <div className="space-y-6 text-left animate-fade-in">
@@ -16,7 +16,7 @@ export default function CompanyLeadsTab({ companyId, token }) {
             CRM Lead Management
           </h3>
           <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-            Track and manage prospective project requests and employee candidate pipelines.
+            Track and manage prospective project requests and client pipeline accounts.
           </p>
         </div>
         <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-850 p-1 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-inner">
@@ -32,15 +32,15 @@ export default function CompanyLeadsTab({ companyId, token }) {
             <span>Project Leads</span>
           </button>
           <button
-            onClick={() => setSubTab('employees')}
+            onClick={() => setSubTab('clients')}
             className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              subTab === 'employees'
+              subTab === 'clients'
                 ? 'bg-white dark:bg-slate-900 text-indigo-650 dark:text-indigo-400 shadow-sm border border-slate-200/50 dark:border-slate-800/80'
                 : 'text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             <Users size={13} />
-            <span>Employee Leads</span>
+            <span>Client Leads</span>
           </button>
         </div>
       </div>
@@ -48,9 +48,9 @@ export default function CompanyLeadsTab({ companyId, token }) {
       {/* Main Content Area */}
       <div className="animate-transition">
         {subTab === 'projects' ? (
-          <ProjectLeadsCrud companyId={companyId} token={token} />
+          <ProjectLeadsCrud companyId={companyId} token={token} onRefresh={onRefresh} />
         ) : (
-          <EmployeeLeadsCrud companyId={companyId} token={token} />
+          <ClientLeadsCrud companyId={companyId} token={token} />
         )}
       </div>
     </div>

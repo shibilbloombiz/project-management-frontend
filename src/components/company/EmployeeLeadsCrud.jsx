@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 
-export default function EmployeeLeadsCrud({ companyId }) {
+export default function EmployeeLeadsCrud({ companyId, employees = [] }) {
   const storageKey = `syncra_employee_leads_${companyId || 'default'}`;
 
   // State Management
@@ -28,7 +28,28 @@ export default function EmployeeLeadsCrud({ companyId }) {
         setLeads([]);
       }
     } else {
-      setLeads([]);
+      const defaultLeads = [
+        {
+          id: 'mock_lead_1',
+          candidateName: 'Sarah Jenkins',
+          email: 'sarah.jenkins@example.com',
+          phone: '555-0143',
+          position: 'Professional Project Management Lead',
+          targetDate: '2026-07-15',
+          status: 'Interviewing'
+        },
+        {
+          id: 'mock_lead_2',
+          candidateName: 'David Miller',
+          email: 'david.miller@example.com',
+          phone: '555-0188',
+          position: 'Agile Project Manager',
+          targetDate: '2026-08-01',
+          status: 'Offer Extended'
+        }
+      ];
+      setLeads(defaultLeads);
+      localStorage.setItem(storageKey, JSON.stringify(defaultLeads));
     }
   }, [companyId]);
 
@@ -98,9 +119,25 @@ export default function EmployeeLeadsCrud({ companyId }) {
       case 'Interviewing': return 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400';
       case 'Offer Extended': return 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400';
       case 'Rejected': return 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400';
+      case 'Active':
+      case 'Hired': return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border-indigo-150 dark:border-indigo-900/30';
       default: return 'bg-slate-100 text-slate-700';
     }
   };
+
+  const combinedLeads = [
+    ...employees.map(emp => ({
+      id: emp._id || emp.id || emp.email,
+      candidateName: emp.name,
+      email: emp.email,
+      phone: emp.phone || '-',
+      position: emp.role || emp.domain || 'Registered Staff',
+      targetDate: emp.date || '-',
+      status: emp.status || 'Active',
+      isRegisteredEmployee: true
+    })),
+    ...leads
+  ];
 
   return (
     <div className="space-y-6">
@@ -108,7 +145,7 @@ export default function EmployeeLeadsCrud({ companyId }) {
       <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
         <div>
           <h4 className="text-sm font-extrabold text-slate-805 dark:text-white uppercase tracking-wider">Candidate Pipelines</h4>
-          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-0.5">CRUD console for monitoring prospective candidate leads.</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 font-semibold mt-0.5">CRUD console for monitoring prospective candidate leads and registered staff.</p>
         </div>
         <button
           onClick={handleOpenAdd}
@@ -135,9 +172,14 @@ export default function EmployeeLeadsCrud({ companyId }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-350">
-              {leads.map(lead => (
+              {combinedLeads.map(lead => (
                 <tr key={lead.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="py-4 px-6 font-extrabold text-slate-800 dark:text-white">{lead.candidateName}</td>
+                  <td className="py-4 px-6 font-extrabold text-slate-800 dark:text-white flex items-center space-x-2 text-left">
+                    <span>{lead.candidateName}</span>
+                    {lead.isRegisteredEmployee && (
+                      <span className="text-[8px] uppercase font-black px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30 rounded shrink-0">Staff</span>
+                    )}
+                  </td>
                   <td className="py-4 px-6 font-mono font-medium text-slate-550 dark:text-slate-450">{lead.email}</td>
                   <td className="py-4 px-6 font-medium text-slate-500 dark:text-slate-450">{lead.phone || '-'}</td>
                   <td className="py-4 px-6 font-extrabold text-slate-700 dark:text-slate-300">{lead.position || '-'}</td>
@@ -148,24 +190,30 @@ export default function EmployeeLeadsCrud({ companyId }) {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-right flex items-center justify-end space-x-2">
-                    <button
-                      onClick={() => handleOpenEdit(lead)}
-                      className="p-1 text-slate-405 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer"
-                      title="Edit Lead"
-                    >
-                      <Edit2 size={12} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(lead.id)}
-                      className="p-1 text-red-500 hover:text-red-750 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors cursor-pointer"
-                      title="Delete Lead"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {lead.isRegisteredEmployee ? (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold italic mr-2">Registered</span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleOpenEdit(lead)}
+                          className="p-1 text-slate-405 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors cursor-pointer"
+                          title="Edit Lead"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(lead.id)}
+                          className="p-1 text-red-500 hover:text-red-750 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors cursor-pointer"
+                          title="Delete Lead"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
-              {leads.length === 0 && (
+              {combinedLeads.length === 0 && (
                 <tr>
                   <td colSpan="7" className="text-center py-10 text-slate-400 dark:text-slate-500 font-bold">No active employee leads registered.</td>
                 </tr>
@@ -210,7 +258,7 @@ export default function EmployeeLeadsCrud({ companyId }) {
                 <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Email Address</label>
                 <input
                   type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g. peter.candidate@company.com"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -218,14 +266,14 @@ export default function EmployeeLeadsCrud({ companyId }) {
                   <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Phone Number</label>
                   <input
                     type="text" value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g. 555-0199"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
                 <div>
                   <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Position / Role</label>
                   <input
                     type="text" value={position} onChange={e => setPosition(e.target.value)} placeholder="e.g. Software Engineer"
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
               </div>
@@ -234,14 +282,14 @@ export default function EmployeeLeadsCrud({ companyId }) {
                   <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Target Onboard Date</label>
                   <input
                     type="date" value={targetDate} onChange={e => setTargetDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                   />
                 </div>
                 <div>
                   <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Status</label>
                   <select
                     value={status} onChange={e => setStatus(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-202 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
                   >
                     <option value="Applied">Applied</option>
                     <option value="Interviewing">Interviewing</option>
@@ -253,7 +301,7 @@ export default function EmployeeLeadsCrud({ companyId }) {
               <div className="flex space-x-2 pt-3 justify-end border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button" onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-660 dark:text-slate-300 font-bold rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>

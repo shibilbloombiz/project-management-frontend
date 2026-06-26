@@ -263,6 +263,162 @@ body {
   box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2) !important;
 }
 
+button[class*="bg-indigo-600"],
+button[class*="bg-indigo-650"],
+button[class*="bg-indigo-700"],
+button[class*="bg-purple-600"],
+button[class*="bg-purple-700"],
+button[class*="bg-emerald-600"],
+button[class*="bg-emerald-650"],
+button[class*="bg-emerald-700"],
+button[class*="bg-red-600"],
+button[class*="bg-red-650"],
+button[class*="bg-red-700"],
+button[class*="bg-amber-600"][class*="text-white"],
+button[class*="bg-amber-650"][class*="text-white"] {
+  color: #ffffff;
+}
+
+button[class*="bg-white"],
+button[class*="bg-slate-50"],
+button[class*="bg-slate-100"],
+button[class*="bg-slate-200"] {
+  color: #334155;
+}
+
+.dark button[class*="bg-white"],
+.dark button[class*="bg-slate-50"],
+.dark button[class*="bg-slate-100"],
+.dark button[class*="bg-slate-200"],
+.dark button[class*="bg-slate-800"],
+.dark button[class*="bg-slate-900"],
+.dark button[class*="bg-slate-950"] {
+  color: #e2e8f0;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Employee dashboard light shell. The employee modules were originally dark-only,
+   so this scoped layer brings them in line with the company/client dashboards. */
+html:not(.dark) .employee-light-theme {
+  color-scheme: light;
+}
+
+html:not(.dark) .employee-light-theme [class*="bg-slate-950"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-955"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-905"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-900"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-850"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-855"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-805"],
+html:not(.dark) .employee-light-theme [class*="bg-slate-800"] {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+html:not(.dark) .employee-light-theme [class*="bg-gradient-to-br"] {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+html:not(.dark) .employee-light-theme [class*="border-slate-950"],
+html:not(.dark) .employee-light-theme [class*="border-slate-900"],
+html:not(.dark) .employee-light-theme [class*="border-slate-850"],
+html:not(.dark) .employee-light-theme [class*="border-slate-800"],
+html:not(.dark) .employee-light-theme [class*="border-slate-750"],
+html:not(.dark) .employee-light-theme [class*="border-slate-700"] {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .employee-light-theme .text-white,
+html:not(.dark) .employee-light-theme [class*="text-slate-100"],
+html:not(.dark) .employee-light-theme [class*="text-slate-200"],
+html:not(.dark) .employee-light-theme [class*="text-slate-300"],
+html:not(.dark) .employee-light-theme [class*="text-slate-350"] {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .employee-light-theme [class*="text-slate-400"],
+html:not(.dark) .employee-light-theme [class*="text-slate-450"],
+html:not(.dark) .employee-light-theme [class*="text-slate-500"],
+html:not(.dark) .employee-light-theme [class*="text-slate-550"] {
+  color: #64748b !important;
+}
+
+html:not(.dark) .employee-light-theme input,
+html:not(.dark) .employee-light-theme select,
+html:not(.dark) .employee-light-theme textarea {
+  background-color: #f8fafc !important;
+  border-color: #dbe3ee !important;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+html:not(.dark) .employee-light-theme select {
+  min-height: 2rem;
+  padding-right: 1.75rem !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+html:not(.dark) .employee-light-theme input::placeholder,
+html:not(.dark) .employee-light-theme textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html:not(.dark) .employee-light-theme [class*="hover:bg-slate-"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .employee-light-theme [class*="hover:text-slate-"]:hover {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .employee-light-theme .bg-indigo-600.text-white,
+html:not(.dark) .employee-light-theme .bg-indigo-650.text-white,
+html:not(.dark) .employee-light-theme .bg-indigo-700.text-white,
+html:not(.dark) .employee-light-theme .bg-emerald-600.text-white,
+html:not(.dark) .employee-light-theme .bg-emerald-650.text-white,
+html:not(.dark) .employee-light-theme .bg-emerald-700.text-white,
+html:not(.dark) .employee-light-theme .bg-purple-600.text-white,
+html:not(.dark) .employee-light-theme .bg-purple-700.text-white,
+html:not(.dark) .employee-light-theme .bg-red-600.text-white,
+html:not(.dark) .employee-light-theme .bg-red-650.text-white,
+html:not(.dark) .employee-light-theme .bg-red-700.text-white,
+html:not(.dark) .employee-light-theme .bg-indigo-600.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-indigo-650.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-indigo-700.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-emerald-600.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-emerald-650.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-emerald-700.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-purple-600.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-purple-700.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-red-600.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-red-650.text-white:hover,
+html:not(.dark) .employee-light-theme .bg-red-700.text-white:hover {
+  color: #ffffff !important;
+}
+
+html:not(.dark) .employee-light-theme .bg-indigo-600.text-white *,
+html:not(.dark) .employee-light-theme .bg-indigo-650.text-white *,
+html:not(.dark) .employee-light-theme .bg-indigo-700.text-white *,
+html:not(.dark) .employee-light-theme .bg-emerald-600.text-white *,
+html:not(.dark) .employee-light-theme .bg-emerald-650.text-white *,
+html:not(.dark) .employee-light-theme .bg-emerald-700.text-white *,
+html:not(.dark) .employee-light-theme .bg-purple-600.text-white *,
+html:not(.dark) .employee-light-theme .bg-purple-700.text-white *,
+html:not(.dark) .employee-light-theme .bg-red-600.text-white *,
+html:not(.dark) .employee-light-theme .bg-red-650.text-white *,
+html:not(.dark) .employee-light-theme .bg-red-700.text-white * {
+  color: inherit !important;
+}
+
+html:not(.dark) .employee-light-theme .employee-projects-workspace [class*="rounded-3xl"],
+html:not(.dark) .employee-light-theme .employee-projects-workspace [class*="rounded-2xl"] {
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
 /* Print styles for Invoice */
 @media print {
   body * {

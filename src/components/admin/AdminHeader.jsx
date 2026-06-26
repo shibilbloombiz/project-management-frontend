@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, Search, Sparkles, Bell } from 'lucide-react';
 import NotificationsDropdown from '../NotificationsDropdown';
+import ThemeToggle from '../ThemeToggle';
 
 export default function AdminHeader({ 
   searchTerm, 
@@ -68,6 +69,8 @@ export default function AdminHeader({
 
       {/* Right Action Icons & User Dropdown */}
       <div className="flex items-center space-x-4">
+        <ThemeToggle compact />
+
         <button 
           onClick={onOpenAi}
           className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center space-x-1.5 cursor-pointer shadow-md shadow-indigo-100 transition-colors"

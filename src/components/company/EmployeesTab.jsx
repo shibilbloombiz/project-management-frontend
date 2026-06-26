@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileDown, CalendarClock, Clock, Check, X, ShieldAlert, Plus, Share2, MapPin } from 'lucide-react';
+import { Users, FileDown, CalendarClock, Clock, Check, X, ShieldAlert, Plus, Share2, MapPin, Mail, MessageCircle } from 'lucide-react';
 import AddEmployeeModal from './AddEmployeeModal';
 import { API_BASE_URL } from '../../config';
 
 export default function EmployeesTab({ employees, attendance = [], leaves = [], onApproveLeave, onDeclineLeave, org, onRefreshEmployees, token, onViewEmployee, companyDetails }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSendLinkMenu, setShowSendLinkMenu] = useState(false);
   const [filterType, setFilterType] = useState('today');
   const [filterDate, setFilterDate] = useState(() => {
     const today = new Date();
@@ -22,10 +23,11 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
 
   const parseDateStr = (dateStr) => {
     if (!dateStr) return null;
-    if (dateStr.includes('-')) {
-      return new Date(dateStr);
+    const isoMatch = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
     }
-    const parts = dateStr.trim().split(/\s+/);
+    const parts = String(dateStr).trim().split(/\s+/);
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
       const months = {
@@ -59,36 +61,53 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
     });
   };
 
+  const toDateKey = (date) => {
+    if (!date || Number.isNaN(date.getTime())) return '';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const getLogDateKey = (dateStr) => toDateKey(parseDateStr(dateStr));
+
+  const todayKey = toDateKey(new Date());
   const filteredAttendance = attendance.filter(log => {
+    const logDateKey = getLogDateKey(log.date);
     if (filterType === 'all') return true;
     
     if (filterType === 'today') {
-      const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-      return log.date.toLowerCase() === todayStr.toLowerCase();
+      return logDateKey === todayKey;
     }
     
     if (filterType === 'date') {
       if (!filterDate) return true;
-      const parts = filterDate.split('-');
-      if (parts.length !== 3) return true;
-      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      const formatted = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-      return log.date.toLowerCase() === formatted.toLowerCase();
+      return logDateKey === filterDate;
     }
     
     if (filterType === 'month') {
       if (!filterMonth) return true;
-      const parts = filterMonth.split('-');
-      if (parts.length !== 2) return true;
-      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, 2);
-      const monthLabel = d.toLocaleDateString('en-GB', { month: 'short' });
-      const yearLabel = d.toLocaleDateString('en-GB', { year: 'numeric' });
-      const matchSuffix = `${monthLabel} ${yearLabel}`;
-      return log.date.toLowerCase().endsWith(matchSuffix.toLowerCase());
+      return logDateKey.startsWith(`${filterMonth}-`);
     }
     
     return true;
   });
+
+  const getEmployeePortalInvite = () => {
+    const portalUrl = `${window.location.origin}/employee-portal`;
+    return `Hi,\n\nPlease use this employee portal link to access your workspace dashboard for ${org || 'our company'}:\n${portalUrl}\n\nIf this is your first login, use the email and temporary password shared by your administrator.`;
+  };
+
+  const handleSendViaWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent(getEmployeePortalInvite())}`, '_blank', 'noopener,noreferrer');
+    setShowSendLinkMenu(false);
+  };
+
+  const handleSendViaEmail = () => {
+    const subject = `${org || 'Workspace'} employee portal link`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(getEmployeePortalInvite())}`;
+    setShowSendLinkMenu(false);
+  };
 
   const handleCopyPortalLink = (emp) => {
     const text = `Hi ${emp.name},\n\nPlease access the employee self-service portal to set up your profile:\nPortal URL: ${window.location.origin}/employee-portal\nEmail: ${emp.email}\nTemporary Password: (use the one provided by your administrator)`;
@@ -133,13 +152,42 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
             </h3>
             <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">Staff roster, roles, and status registries registered on this workspace node.</p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-md shadow-indigo-100 dark:shadow-none"
-          >
-            <Plus size={13} />
-            <span>Add Employee</span>
-          </button>
+          <div className="flex items-center gap-2 relative">
+            <button
+              onClick={() => setShowSendLinkMenu(value => !value)}
+              className="bg-white dark:bg-slate-850 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-650 dark:text-slate-250 border border-slate-200 dark:border-slate-750 font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-sm"
+            >
+              <Share2 size={13} />
+              <span>Send Link</span>
+            </button>
+            {showSendLinkMenu && (
+              <div className="absolute right-0 top-12 z-20 w-48 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-2 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={handleSendViaWhatsApp}
+                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                >
+                  <MessageCircle size={14} />
+                  <span>WhatsApp Link</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendViaEmail}
+                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+                >
+                  <Mail size={14} />
+                  <span>Email Link</span>
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center space-x-1.5 cursor-pointer transition-colors shadow-md shadow-indigo-100 dark:shadow-none"
+            >
+              <Plus size={13} />
+              <span>Add Employee</span>
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

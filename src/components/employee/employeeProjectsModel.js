@@ -31,10 +31,12 @@ export const deriveEmployeeProjectKpis = (selectedProject, isMyTask) => {
     return { total: 0, progress: 0, review: 0, completed: 0, overdue: 0, hours: 0 };
   }
   const myTasks = selectedProject.tasks.filter(isMyTask);
+  const isProgressStatus = (status) => status === 'Dev' || status === 'In Progress';
+  const isReviewStatus = (status) => status === 'QA' || status === 'Review';
   return {
     total: myTasks.length,
-    progress: myTasks.filter((task) => task.status === 'Dev').length,
-    review: myTasks.filter((task) => task.status === 'QA').length,
+    progress: myTasks.filter((task) => isProgressStatus(task.status)).length,
+    review: myTasks.filter((task) => isReviewStatus(task.status)).length,
     completed: myTasks.filter((task) => task.status === 'Done').length,
     overdue: myTasks.filter((task) => task.status !== 'Done' && (task.note?.includes('[BLOCKED]') || task.title.toLowerCase().includes('pdf'))).length,
     hours: myTasks.reduce((sum, task) => sum + (parseInt(parseTaskNote(task.note).hours, 10) || 0), 0),

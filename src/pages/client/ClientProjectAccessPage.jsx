@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, ShieldCheck, AlertTriangle, Briefcase, RefreshCw } from 'lucide-react';
 import { useClientProjectPortal } from '../../hooks/useClientProjectPortal';
 import ClientProjectHeader from '../../components/clientPortal/ClientProjectHeader';
@@ -12,6 +12,7 @@ import ClientMilestonesTimeline from '../../components/clientPortal/ClientMilest
 import ClientMessagesPanel from '../../components/clientPortal/ClientMessagesPanel';
 import ClientActivityFeed from '../../components/clientPortal/ClientActivityFeed';
 import ClientPendingActionsCard from '../../components/clientPortal/ClientPendingActionsCard';
+import ClientLiveProductCard from '../../components/clientPortal/ClientLiveProductCard';
 import FloatingChat from '../../components/FloatingChat';
 
 
@@ -37,19 +38,16 @@ export default function ClientProjectAccessPage({ token, onBackToLanding }) {
 
   const overview = dashboard?.projectOverview || {};
   const staff = overview.assignedStaff || [];
-  const contacts = [
+  const contacts = useMemo(() => [
     { id: 'company', email: overview.companyAdminEmail || 'admin@company.com', name: `Company Admin (${overview.org || 'Agency'})` },
-    staff[0] && { 
-      id: 'staff1', 
-      email: typeof staff[0] === 'object' ? staff[0].email : staff[0], 
-      name: typeof staff[0] === 'object' ? `${staff[0].name} (Lead Specialist)` : `Lead Specialist (${staff[0]})` 
-    },
-    staff[1] && { 
-      id: 'staff2', 
-      email: typeof staff[1] === 'object' ? staff[1].email : staff[1], 
-      name: typeof staff[1] === 'object' ? `${staff[1].name} (Co-Specialist)` : `Co-Specialist (${staff[1]})` 
-    },
-  ].filter(Boolean);
+    ...staff.map((member, index) => ({
+      id: `staff${index + 1}`,
+      email: typeof member === 'object' ? member.email : member,
+      name: typeof member === 'object'
+        ? `${member.name || member.email} (${member.role || (index === 0 ? 'Lead Specialist' : 'Specialist')})`
+        : `${index === 0 ? 'Lead Specialist' : 'Specialist'} (${member})`,
+    })),
+  ].filter((contact) => contact?.email), [overview.companyAdminEmail, overview.org, staff]);
 
   // Sync selected contact if list updates
   useEffect(() => {
@@ -164,6 +162,11 @@ export default function ClientProjectAccessPage({ token, onBackToLanding }) {
           {/* Main Scope Column (2/3 width) */}
           <div className="lg:col-span-2 space-y-6">
             
+            {/* Live Product Card (Simulated Browser Frame) */}
+            {overview.deployedUrl && (
+              <ClientLiveProductCard deployedUrl={overview.deployedUrl} />
+            )}
+
             {/* Required Actions Card */}
             <ClientPendingActionsCard actions={dashboard?.pendingActions} />
 
@@ -179,7 +182,9 @@ export default function ClientProjectAccessPage({ token, onBackToLanding }) {
             <ClientRequirementsPanel requirements={requirements} />
 
             {/* Scope proposal Form */}
-            <ClientRequirementForm onSubmit={proposeRequirement} />
+            <div className="scroll-mt-24">
+              <ClientRequirementForm onSubmit={proposeRequirement} />
+            </div>
 
           </div>
 

@@ -156,15 +156,32 @@ function TabContent({
       <CompanyLeadsTab
         companyId={companyId}
         token={token}
+        employees={data?.employees || []}
+        onRefresh={loadData}
       />
     );
   }
 
   if (activeTab === 'clients') {
+    const clientPayments = (data?.projects || []).flatMap(project => {
+      const clientInfo = (data?.clients || []).find(c => c.email?.toLowerCase() === project.clientEmail?.toLowerCase());
+      const clientName = clientInfo ? clientInfo.name : project.clientEmail;
+      return (project.invoices || []).map(inv => ({
+        _id: inv._id || inv.invoiceId,
+        id: inv.id || inv.invoiceId,
+        clientName: clientName,
+        clientEmail: project.clientEmail,
+        projectName: project.name,
+        amount: inv.amount,
+        status: inv.status,
+        date: inv.date,
+      }));
+    });
+
     return (
       <ClientsTab
         clients={data?.clients || []}
-        payments={data?.payments || []}
+        payments={clientPayments}
         onCreateClient={handlers?.createClient}
         onSoftDelete={handlers?.softDeleteClient}
         org={org}

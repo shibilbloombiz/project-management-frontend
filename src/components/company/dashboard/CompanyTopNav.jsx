@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Layers, ShieldCheck } from 'lucide-react';
 import NotificationsDropdown from '../../NotificationsDropdown';
+import ThemeToggle from '../../ThemeToggle';
 
 export default function CompanyTopNav({
   org,
@@ -65,6 +66,8 @@ export default function CompanyTopNav({
       </div>
 
       <div className="flex items-center space-x-4">
+        <ThemeToggle compact />
+
         <div className="relative">
           <button
             onClick={onToggleNotifications}

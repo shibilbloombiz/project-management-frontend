@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
 import EmployeeAttendance from './EmployeeAttendance';
-import EmployeeChat from './EmployeeChat';
 import EmployeeGitHub from './EmployeeGitHub';
 import EmployeeLeaves from './EmployeeLeaves';
 import EmployeeLogin from './EmployeeLogin';
@@ -22,6 +21,7 @@ import EmployeeProfile from './EmployeeProfile';
 import EmployeeProjects from './EmployeeProjects';
 import FloatingChat from '../FloatingChat';
 import NotificationsDropdown from '../NotificationsDropdown';
+import ThemeToggle from '../ThemeToggle';
 
 const Github = ({ size = 20, className = '' }) => (
   <svg
@@ -45,7 +45,6 @@ const tabs = [
   { id: 'attendance', label: 'Attendance', icon: Clock, component: EmployeeAttendance },
   { id: 'projects', label: 'Projects', icon: FolderGit2, component: EmployeeProjects },
   { id: 'leaves', label: 'Leaves', icon: Calendar, component: EmployeeLeaves },
-  { id: 'chat', label: 'Messages', icon: MessageSquare, component: EmployeeChat },
   { id: 'github', label: 'GitHub', icon: Github, component: EmployeeGitHub },
   { id: 'profile', label: 'Profile', icon: User, component: EmployeeProfile },
 ];
@@ -137,7 +136,8 @@ export default function EmployeeDashboard({ onBackToLanding }) {
 
         projectsData.data.forEach((project) => {
           (project.tasks || []).forEach((task) => {
-            const isMine = task.assigneeEmail?.toLowerCase() === email.toLowerCase();
+            const isMine =
+              task.assigneeEmail?.trim().toLowerCase() === email.trim().toLowerCase();
             if (isMine && task.status !== 'Done') {
               pendingTasks += 1;
               nextNotifications.push({
@@ -207,9 +207,9 @@ export default function EmployeeDashboard({ onBackToLanding }) {
 
   if (loadingProfile && !userProfile) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <Loader2 size={40} className="text-indigo-500 animate-spin" />
-        <p className="text-xs font-semibold text-slate-400">Loading workspace...</p>
+        <p className="text-xs font-semibold text-slate-500">Loading workspace...</p>
       </div>
     );
   }
@@ -217,7 +217,7 @@ export default function EmployeeDashboard({ onBackToLanding }) {
   const ActiveComponent = tabs.find((tab) => tab.id === activeTab)?.component || EmployeeAttendance;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-x-hidden">
+    <div className="employee-light-theme min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans overflow-x-hidden">
       <EmployeeTopBar
         userProfile={userProfile}
         activeNotifications={activeNotifications}
@@ -264,7 +264,7 @@ export default function EmployeeDashboard({ onBackToLanding }) {
               onSelectTab={setActiveTab}
             />
 
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:p-6">
               <ActiveComponent
                 token={token}
                 user={userProfile}
@@ -294,25 +294,27 @@ function EmployeeTopBar({
   onToggleMobileMenu,
 }) {
   return (
-    <nav className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
+    <nav className="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 py-3 shadow-sm backdrop-blur sm:px-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white">
             <Building2 size={18} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-extrabold text-white">Syncra Workspace</p>
-            <p className="truncate text-[11px] font-semibold text-slate-400">
+            <p className="truncate text-sm font-extrabold text-slate-900 dark:text-white">Syncra Workspace</p>
+            <p className="truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-display">
               {userProfile?.org || 'Employee Workspace'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle compact />
+
           <div className="relative">
             <button
               onClick={onToggleNotifications}
-              className="relative rounded-xl p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white"
+              className="relative rounded-xl p-2 text-slate-500 dark:text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
               aria-label="Notifications"
             >
               <Bell size={18} />
@@ -330,10 +332,10 @@ function EmployeeTopBar({
             />
           </div>
 
-          <div className="hidden items-center gap-3 border-l border-slate-800 pl-3 sm:flex">
+          <div className="hidden items-center gap-3 border-l border-slate-200 dark:border-slate-800 pl-3 sm:flex">
             <div className="text-right">
-              <p className="text-xs font-extrabold text-white">{userProfile?.name || 'Employee'}</p>
-              <p className="text-[10px] font-semibold text-slate-500">
+              <p className="text-xs font-extrabold text-slate-900 dark:text-white">{userProfile?.name || 'Employee'}</p>
+              <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
                 {userProfile?.domain || 'Team Member'}
               </p>
             </div>
@@ -347,7 +349,7 @@ function EmployeeTopBar({
 
           <button
             onClick={onToggleMobileMenu}
-            className="rounded-xl bg-slate-900 p-2 text-slate-300 transition hover:bg-slate-800 lg:hidden"
+            className="rounded-xl bg-slate-100 dark:bg-slate-800 p-2 text-slate-600 dark:text-slate-350 transition hover:bg-slate-200 dark:hover:bg-slate-700 lg:hidden"
             aria-label="Open menu"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -360,7 +362,7 @@ function EmployeeTopBar({
 
 function EmployeeSidebar({ tabs, activeTab, onSelectTab, onLogout, onBackToLanding }) {
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-slate-800 bg-slate-950 p-4 lg:flex lg:flex-col lg:justify-between">
+    <aside className="hidden w-64 shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 lg:flex lg:flex-col lg:justify-between animate-transition">
       <TabList tabs={tabs} activeTab={activeTab} onSelectTab={onSelectTab} />
       <SidebarActions onLogout={onLogout} onBackToLanding={onBackToLanding} />
     </aside>
@@ -369,12 +371,12 @@ function EmployeeSidebar({ tabs, activeTab, onSelectTab, onLogout, onBackToLandi
 
 function MobileMenu({ tabs, activeTab, onSelectTab, onClose, onLogout, onBackToLanding }) {
   return (
-    <div className="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden">
-      <aside className="flex h-full w-72 flex-col justify-between border-r border-slate-800 bg-slate-950 p-5 shadow-2xl">
+    <div className="fixed inset-0 z-40 bg-slate-900/30 dark:bg-slate-950/40 backdrop-blur-sm lg:hidden">
+      <aside className="flex h-full w-72 flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xl animate-slide-right">
         <div className="space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <span className="text-sm font-extrabold text-white">Menu</span>
-            <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-900">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+            <span className="text-sm font-extrabold text-slate-900 dark:text-white">Menu</span>
+            <button onClick={onClose} className="rounded-lg p-1 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
               <X size={16} />
             </button>
           </div>
@@ -389,7 +391,7 @@ function MobileMenu({ tabs, activeTab, onSelectTab, onClose, onLogout, onBackToL
 function TabList({ tabs, activeTab, onSelectTab }) {
   return (
     <div className="space-y-1">
-      <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+      <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-450">
         Workspace
       </p>
       {tabs.map((tab) => {
@@ -399,10 +401,10 @@ function TabList({ tabs, activeTab, onSelectTab }) {
           <button
             key={tab.id}
             onClick={() => onSelectTab(tab.id)}
-            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition ${
+            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold transition cursor-pointer ${
               isActive
-                ? 'bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/20'
-                : 'text-slate-400 hover:bg-slate-900 hover:text-white'
+                ? 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-100 dark:ring-indigo-900/30'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Icon size={16} />
@@ -416,18 +418,18 @@ function TabList({ tabs, activeTab, onSelectTab }) {
 
 function SidebarActions({ onLogout, onBackToLanding }) {
   return (
-    <div className="space-y-2 border-t border-slate-800 pt-4">
+    <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-4">
       {onBackToLanding && (
         <button
           onClick={onBackToLanding}
-          className="w-full rounded-xl border border-slate-800 px-3 py-2.5 text-xs font-bold text-slate-300 transition hover:bg-slate-900"
+          className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-805 cursor-pointer"
         >
           Landing Page
         </button>
       )}
       <button
         onClick={onLogout}
-        className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-red-300 transition hover:bg-red-950/30"
+        className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
       >
         <LogOut size={16} />
         Log Out
@@ -448,18 +450,18 @@ function DashboardHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Employee Console</p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
             {userProfile?.name || 'Workspace'}
           </h1>
-          <p className="mt-1 max-w-2xl text-sm font-medium text-slate-400">
+          <p className="mt-1 max-w-2xl text-sm font-medium text-slate-500">
             Manage attendance, assigned work, leave requests, and workspace messages.
           </p>
         </div>
         <span
           className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[11px] font-extrabold ${
             isCheckedIn
-              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-              : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              : 'border-amber-200 bg-amber-50 text-amber-700'
           }`}
         >
           {isCheckedIn ? 'Checked In' : 'Not Checked In'}
@@ -498,21 +500,21 @@ function DashboardHeader({
 
 function MetricCard({ label, value, caption, icon: Icon, color, onClick }) {
   const colorClass = {
-    amber: 'bg-amber-500/10 text-amber-300 ring-amber-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/20',
-    indigo: 'bg-indigo-500/10 text-indigo-300 ring-indigo-500/20',
-    purple: 'bg-purple-500/10 text-purple-300 ring-purple-500/20',
+    amber: 'bg-amber-50 text-amber-700 ring-amber-100',
+    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+    indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-100',
+    purple: 'bg-purple-50 text-purple-700 ring-purple-100',
   }[color];
 
   return (
     <button
       onClick={onClick}
-      className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 text-left shadow-sm transition hover:border-slate-700 hover:bg-slate-900"
+      className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-slate-50"
     >
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-extrabold text-white">{value}</p>
+          <p className="mt-2 text-2xl font-extrabold text-slate-900">{value}</p>
           <p className="mt-1 text-xs font-semibold text-slate-500">{caption}</p>
         </div>
         <span className={`rounded-xl p-2 ring-1 ${colorClass}`}>

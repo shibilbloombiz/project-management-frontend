@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../config';
-import { Briefcase, CheckSquare, Clock, BarChart3, Users, Play, ArrowLeft, Plus, Check, X, Edit } from 'lucide-react';
+import { Briefcase, CheckSquare, Clock, BarChart3, Users, Play, ArrowLeft, Plus, Check, X, Edit, ShieldAlert } from 'lucide-react';
 
 export default function CompanyLeadOperations({ activeTab, companyId, org, userEmail, adminName }) {
   const [loading, setLoading] = useState(true);
@@ -183,6 +183,7 @@ export default function CompanyLeadOperations({ activeTab, companyId, org, userE
 
   const totalTasks = projects.reduce((acc, p) => acc + (p.tasks ? p.tasks.length : 0), 0);
   const pendingTimesheets = timesheets.filter((t) => t.status === 'Pending').length;
+  const needsSupport = (task) => /Support:\s*Yes/i.test(task.note || '');
 
   if (loading && projects.length === 0 && teamMembers.length === 0 && timesheets.length === 0 && progressReport.length === 0) {
     return (
@@ -231,7 +232,17 @@ export default function CompanyLeadOperations({ activeTab, companyId, org, userE
                     (proj.tasks || []).map((task) => (
                       <tr key={task.id || task._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                         <td className="py-4 px-6 font-extrabold text-slate-500 dark:text-slate-400">{proj.name}</td>
-                        <td className="py-4 px-6 font-extrabold text-slate-800 dark:text-white">{task.title}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col gap-1.5">
+                            <span className="font-extrabold text-slate-800 dark:text-white">{task.title}</span>
+                            {needsSupport(task) && (
+                              <span className="inline-flex w-fit items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+                                <ShieldAlert size={10} />
+                                Support Requested
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-4 px-6">
                           {task.assigneeName ? (
                             <div>

@@ -161,7 +161,9 @@ export default function CompanyRegister({
       });
       const orderData = await orderRes.json();
       if (!orderData.success) {
-        setError(orderData.message || "Failed to initialize Razorpay checkout order.");
+        console.error("Razorpay order creation error details:", orderData);
+        const detailedErr = orderData.error?.error?.description || orderData.error?.description || (orderData.error ? JSON.stringify(orderData.error) : "");
+        setError((orderData.message || "Failed to initialize Razorpay checkout order.") + (detailedErr ? `: ${detailedErr}` : ""));
         setLoading(false);
         return;
       }

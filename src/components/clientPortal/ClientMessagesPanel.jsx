@@ -12,7 +12,7 @@ export default function ClientMessagesPanel({
   onSendMessage,
   clientEmail
 }) {
-  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const fileRef = useRef(null);
 
   const [imageFile, setImageFile] = useState(null);
@@ -20,12 +20,27 @@ export default function ClientMessagesPanel({
 
   const activeContact = contacts.find(c => c.id === selectedContact) || contacts[0];
 
+  const activeEmail = activeContact?.email?.toLowerCase();
+  const clientEmailKey = clientEmail?.toLowerCase();
+  const filteredMessages = messages.filter((m) => {
+    const sender = m.sender?.toLowerCase();
+    const receiver = m.receiver?.toLowerCase();
+    return (
+      (sender === clientEmailKey && receiver === activeEmail) ||
+      (sender === activeEmail && receiver === clientEmailKey)
+    );
+  });
+
+  const msgCount = filteredMessages.length;
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [messages, selectedContact]);
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [msgCount, selectedContact]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -45,25 +60,27 @@ export default function ClientMessagesPanel({
     setImagePreview(null);
   };
 
-  const filteredMessages = messages.filter(
-    m => m.sender === activeContact?.email || m.receiver === activeContact?.email
-  );
-
   return (
     <div className="bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col h-[480px]">
       <div className="p-4 border-b border-slate-100 flex items-center gap-2 shrink-0 text-left">
         <MessageSquare size={14} className="text-indigo-500" />
-        <span className="font-extrabold text-slate-800 uppercase tracking-wider text-xs">Project Chat Desk</span>
+        <span className="font-extrabold text-slate-800 uppercase tracking-wider text-xs">Employee & Admin Chat</span>
+      </div>
+
+      {/* Info banner */}
+      <div className="px-4 py-2 bg-indigo-50 border-b border-slate-100 text-[10px] text-indigo-700 font-bold flex items-center gap-1.5 leading-relaxed shrink-0 text-left">
+        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+        <span>Employee Chat: You can chat directly with assigned project employees and the company admin.</span>
       </div>
 
       {/* Contact tabs */}
-      <div className="flex bg-slate-50 border-b border-slate-100 p-2 gap-2 shrink-0">
+      <div className="flex bg-slate-50 border-b border-slate-100 p-2 gap-2 shrink-0 overflow-x-auto">
         {contacts.map(c => (
           <button
             type="button"
             key={c.id}
             onClick={() => setSelectedContact(c.id)}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-[10px] text-center border transition-all cursor-pointer truncate ${
+            className={`min-w-[110px] flex-1 py-1.5 px-2 rounded-lg font-bold text-[10px] text-center border transition-all cursor-pointer truncate ${
               selectedContact === c.id 
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' 
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -75,7 +92,7 @@ export default function ClientMessagesPanel({
       </div>
 
       {/* Message logs */}
-      <div className="flex-grow overflow-y-auto p-4 space-y-3 bg-slate-50/20 text-xs font-semibold leading-relaxed">
+      <div ref={chatContainerRef} className="flex-grow overflow-y-auto p-4 space-y-3 bg-slate-50/20 text-xs font-semibold leading-relaxed">
         {filteredMessages.length === 0 ? (
           <div className="py-24 text-center text-slate-400 font-semibold">
             <MessageSquare size={22} className="mx-auto text-slate-350 mb-2" />
@@ -110,7 +127,6 @@ export default function ClientMessagesPanel({
             );
           })
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Image preview */}
