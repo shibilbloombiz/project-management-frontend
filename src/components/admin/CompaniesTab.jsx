@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import Tooltip from '../Tooltip';
 
 export default function CompaniesTab({ companies, onSelectCompany, onToggleStatus, onSoftDelete }) {
   return (
@@ -58,13 +59,14 @@ export default function CompaniesTab({ companies, onSelectCompany, onToggleStatu
                   >
                     {comp.status === 'Active' ? 'Suspend' : 'Activate'}
                   </button>
-                  <button
-                    onClick={() => onSoftDelete(comp._id || comp.id)}
-                    className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-950/20 rounded-lg transition-colors cursor-pointer"
-                    title="Move to Trash"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <Tooltip text="Move to Trash">
+                    <button
+                      onClick={() => onSoftDelete(comp._id || comp.id)}
+                      className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-950/20 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </Tooltip>
                 </div>
               </td>
             </tr>

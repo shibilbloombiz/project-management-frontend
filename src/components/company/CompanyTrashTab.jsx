@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Trash2, RotateCcw, AlertTriangle, Briefcase, Users } from 'lucide-react';
+import Tooltip from '../Tooltip';
 
 export default function CompanyTrashTab({ deletedProjects, deletedClients, onRestoreProject, onPurgeProject, onRestoreClient, onPurgeClient, org }) {
   const [subTab, setSubTab] = useState('projects'); // 'projects' | 'clients'
@@ -72,22 +73,24 @@ export default function CompanyTrashTab({ deletedProjects, deletedClients, onRes
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => onRestoreProject(proj._id || proj.id)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-900/30 transition-colors cursor-pointer flex items-center space-x-1"
-                          title="Restore Project"
-                        >
-                          <RotateCcw size={12} />
-                          <span>Restore</span>
-                        </button>
-                        <button
-                          onClick={() => onPurgeProject(proj._id || proj.id)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 dark:border-red-900/30 transition-colors cursor-pointer flex items-center space-x-1"
-                          title="Permanently Delete Project"
-                        >
-                          <Trash2 size={12} />
-                          <span>Purge</span>
-                        </button>
+                        <Tooltip text="Restore Project">
+                          <button
+                            onClick={() => onRestoreProject(proj._id || proj.id)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-900/30 transition-colors cursor-pointer flex items-center space-x-1"
+                          >
+                            <RotateCcw size={12} />
+                            <span>Restore</span>
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Permanently Delete Project">
+                          <button
+                            onClick={() => onPurgeProject(proj._id || proj.id)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 dark:border-red-900/30 transition-colors cursor-pointer flex items-center space-x-1"
+                          >
+                            <Trash2 size={12} />
+                            <span>Purge</span>
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
@@ -133,22 +136,24 @@ export default function CompanyTrashTab({ deletedProjects, deletedClients, onRes
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => onRestoreClient(cli._id || cli.id)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-900/30 transition-colors cursor-pointer flex items-center space-x-1"
-                          title="Restore Client"
-                        >
-                          <RotateCcw size={12} />
-                          <span>Restore</span>
-                        </button>
-                        <button
-                          onClick={() => onPurgeClient(cli._id || cli.id)}
-                          className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 dark:border-red-900/30 transition-colors cursor-pointer flex items-center space-x-1"
-                          title="Permanently Delete Client"
-                        >
-                          <Trash2 size={12} />
-                          <span>Purge</span>
-                        </button>
+                        <Tooltip text="Restore Client">
+                          <button
+                            onClick={() => onRestoreClient(cli._id || cli.id)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 dark:border-emerald-900/30 transition-colors cursor-pointer flex items-center space-x-1"
+                          >
+                            <RotateCcw size={12} />
+                            <span>Restore</span>
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Permanently Delete Client">
+                          <button
+                            onClick={() => onPurgeClient(cli._id || cli.id)}
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold border bg-red-50 hover:bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 dark:border-red-900/30 transition-colors cursor-pointer flex items-center space-x-1"
+                          >
+                            <Trash2 size={12} />
+                            <span>Purge</span>
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>

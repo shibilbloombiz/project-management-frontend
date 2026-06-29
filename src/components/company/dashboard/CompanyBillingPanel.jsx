@@ -1,4 +1,4 @@
-import { Camera, Layers, Printer } from 'lucide-react';
+﻿import { Camera, Clock3, Layers, Printer } from 'lucide-react';
 
 export default function CompanyBillingPanel({
   org,
@@ -37,7 +37,7 @@ export default function CompanyBillingPanel({
           <div className="space-y-1">
             <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest block font-display">Monthly Cost</span>
             <span className="text-xl font-extrabold text-slate-800 dark:text-slate-100">
-              {companyDetails?.billing === 0 ? 'Free Workspace' : `₹${companyDetails?.billing?.toLocaleString() || 0} INR`}
+              {companyDetails?.billing === 0 ? 'Free Workspace' : `â‚¹${companyDetails?.billing?.toLocaleString() || 0} INR`}
             </span>
           </div>
           <div className="space-y-1">
@@ -62,6 +62,30 @@ export default function CompanyBillingPanel({
         </div>
       </div>
 
+
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <Clock3 size={22} />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Attendance Portal Hours</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Employees can mark attendance only during this company-controlled window.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+            <span className={`px-3 py-1 rounded-full ${companyDetails?.attendancePortalEnabled !== false ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-850 dark:text-slate-400'}`}>
+              {companyDetails?.attendancePortalEnabled !== false ? 'Portal Enabled' : 'Portal Disabled'}
+            </span>
+            <span className="px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-300 rounded-full">
+              {companyDetails?.attendancePortalOpenTime || '09:00'} - {companyDetails?.attendancePortalCloseTime || '18:00'}
+            </span>
+          </div>
+        </div>
+      </div>
       {isEditingBilling && (
         <form onSubmit={onSaveBillingDetails} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4 animate-slide-up text-xs font-semibold text-slate-700 dark:text-slate-350">
           <h4 className="text-xs font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-wider mb-2">Update Invoice Credentials & Subscription Plan</h4>
@@ -83,15 +107,14 @@ export default function CompanyBillingPanel({
                 {plans && plans.length > 0 ? (
                   plans.map((p) => (
                     <option key={p.name} value={p.name}>
-                      {p.name} (₹{p.price.toLocaleString()}/mo)
+                      {p.name} (â‚¹{p.price.toLocaleString()}/mo)
                     </option>
                   ))
                 ) : (
                   <>
-                    <option value="Free">Free (₹0/mo)</option>
-                    <option value="Starter Package">Starter Package (₹2,500/mo)</option>
-                    <option value="Scale Package Tier">Scale Package Tier (₹8,900/mo)</option>
-                    <option value="Enterprise SaaS Tier">Enterprise SaaS Tier (₹25,000/mo)</option>
+                    <option value="Free">Free (â‚¹0/mo)</option>
+                    <option value="Starter Package">Starter Package (â‚¹2,500/mo)</option>
+                    <option value="Scale Package Tier">Scale Package Tier (â‚¹8,900/mo)</option>
                   </>
                 )}
               </select>
@@ -111,13 +134,34 @@ export default function CompanyBillingPanel({
               />
             </div>
 
+
+            <div className="md:col-span-2 rounded-xl border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/40 dark:bg-emerald-950/10 p-4 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h5 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">Attendance Portal Schedule</h5>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold mt-0.5">Set when employees can access check-in and check-out actions.</p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs font-extrabold text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={billingForm.attendancePortalEnabled !== false}
+                    onChange={(e) => setBillingForm((prev) => ({ ...prev, attendancePortalEnabled: e.target.checked }))}
+                  />
+                  Portal enabled
+                </label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextField label="Portal Open Time" type="time" value={billingForm.attendancePortalOpenTime || '09:00'} onChange={(value) => setBillingForm((prev) => ({ ...prev, attendancePortalOpenTime: value }))} required />
+                <TextField label="Portal Close Time" type="time" value={billingForm.attendancePortalCloseTime || '18:00'} onChange={(value) => setBillingForm((prev) => ({ ...prev, attendancePortalCloseTime: value }))} required />
+              </div>
+            </div>
             <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest md:col-span-2">
               Billing Address *
               <textarea rows={2} required value={billingForm.billingAddress} onChange={(e) => setBillingForm((prev) => ({ ...prev, billingAddress: e.target.value }))} className="mt-1 w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-800 dark:text-white focus:outline-none resize-none" />
             </label>
           </div>
           <div className="flex justify-end space-x-2 pt-2">
-            <button type="submit" className="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer">Save Invoice & Plan Changes</button>
+            <button type="submit" className="px-4 py-2 bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer">Save Company Settings</button>
           </div>
         </form>
       )}
@@ -179,7 +223,7 @@ function PaymentLedger({ payments, onViewInvoice }) {
                 <td className="py-3.5 px-4 font-mono font-bold text-indigo-650 dark:text-indigo-400">{p.paymentId || 'N/A'}</td>
                 <td className="py-3.5 px-4">{p.clientName}</td>
                 <td className="py-3.5 px-4">{p.date || new Date(p.createdAt).toLocaleDateString()}</td>
-                <td className="py-3.5 px-4 font-extrabold text-slate-900 dark:text-white">₹{(p.amount || 0).toLocaleString()} INR</td>
+                <td className="py-3.5 px-4 font-extrabold text-slate-900 dark:text-white">â‚¹{(p.amount || 0).toLocaleString()} INR</td>
                 <td className="py-3.5 px-4 text-right">
                   <button onClick={() => onViewInvoice(p)} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-550 dark:hover:bg-indigo-955 text-slate-650 dark:text-slate-300 font-bold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-750 flex items-center gap-1.5 ml-auto text-[10px]">
                     <Printer size={12} /><span>Print Receipt</span>
@@ -193,3 +237,4 @@ function PaymentLedger({ payments, onViewInvoice }) {
     </div>
   );
 }
+

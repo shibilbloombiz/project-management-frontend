@@ -8,6 +8,7 @@ export default function CompanyRegister({
   onRegisterSuccess,
   onGoToLogin
 }) {
+  const [plans, setPlans] = useState(REGISTRATION_PLANS);
   const [step, setStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState(defaultPlan || "Starter Package");
   const [name, setName] = useState("");
@@ -28,6 +29,26 @@ export default function CompanyRegister({
   const [theme, setTheme] = useState(() => {
     return document.documentElement.classList.contains("dark") ? "dark" : "light";
   });
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/plans`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data && data.data.length > 0) {
+          setPlans(data.data);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch plans in CompanyRegister:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (plans.length > 0 && !plans.some(p => p.name === selectedPlan)) {
+      setSelectedPlan(plans[0].name);
+    }
+  }, [plans, selectedPlan]);
+
   useEffect(() => {
     const handleClassChange = () => {
       setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
@@ -39,8 +60,8 @@ export default function CompanyRegister({
     });
     return () => observer.disconnect();
   }, []);
-  const plans = REGISTRATION_PLANS;
-  const currentPlanDetails = plans.find(p => p.name === selectedPlan) || plans[1];
+
+  const currentPlanDetails = plans.find(p => p.name === selectedPlan) || plans[1] || plans[0];
   const calculatedTotal = currentPlanDetails.price;
   const seats = currentPlanDetails.maxUsers;
   useEffect(() => {
@@ -111,7 +132,7 @@ export default function CompanyRegister({
       desc: desc.trim(),
       adminName: adminName.trim(),
       adminEmail: adminEmail.trim().toLowerCase(),
-      plan: selectedPlan.replace(" Package", "").replace(" Package Tier", "").replace(" SaaS Tier", ""),
+      plan: selectedPlan,
       users: seats,
       billing: calculatedTotal,
       billingName: billingName.trim(),

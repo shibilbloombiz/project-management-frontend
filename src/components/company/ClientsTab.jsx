@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Users, CreditCard, Plus, Trash2, ChevronDown, ChevronRight, DollarSign, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 
+import Tooltip from '../Tooltip';
+
 export default function ClientsTab({ clients, payments, onCreateClient, onSoftDelete, org }) {
   const [showAddClient, setShowAddClient] = useState(false);
   const [name,  setName]  = useState('');
@@ -78,10 +80,12 @@ export default function ClientsTab({ clients, payments, onCreateClient, onSoftDe
                       }`}>{cli.status}</span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button onClick={() => onSoftDelete(cli._id || cli.id)}
-                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer" title="Delete">
-                        <Trash2 size={13} />
-                      </button>
+                      <Tooltip text="Move Client to Trash">
+                        <button onClick={() => onSoftDelete(cli._id || cli.id)}
+                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer">
+                          <Trash2 size={13} />
+                        </button>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))}

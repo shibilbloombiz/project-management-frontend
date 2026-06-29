@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import Tooltip from '../Tooltip';
 
 export default function UsersTab({ users, onDeleteUser }) {
   return (
@@ -45,13 +46,14 @@ export default function UsersTab({ users, onDeleteUser }) {
               </td>
               <td className="py-4 px-6 text-right">
                 {user.role !== 'Super Admin' && (
-                  <button
-                    onClick={() => onDeleteUser(user._id || user.id)}
-                    className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-950/20 rounded-lg transition-colors cursor-pointer"
-                    title="Delete User Account"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <Tooltip text="Delete User Account">
+                    <button
+                      onClick={() => onDeleteUser(user._id || user.id)}
+                      className="p-1.5 hover:bg-red-50 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-950/20 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </Tooltip>
                 )}
               </td>
             </tr>

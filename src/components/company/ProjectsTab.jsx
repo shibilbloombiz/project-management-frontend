@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Briefcase, User, Calendar, Tag, ShieldAlert, Plus, Link, Trash2 } from 'lucide-react';
 
+import Tooltip from '../Tooltip';
+
 export default function ProjectsTab({ projects, projectLeads = [], onCreateProject, onSoftDelete, org, onViewProject, userEmail, adminName }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [name, setName] = useState('');
@@ -100,20 +102,11 @@ export default function ProjectsTab({ projects, projectLeads = [], onCreateProje
                   <td className="py-4 px-6">
                     <span 
                       onClick={() => onViewProject && onViewProject(proj)} 
-                      className="font-extrabold text-slate-800 dark:text-white block hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline cursor-pointer"
+                      className="font-extrabold text-slate-800 dark:text-white block hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
                     >
                       {proj.name}
                     </span>
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium block max-w-md mt-0.5 leading-normal">{proj.desc}</span>
-                    {proj.leadId ? (
-                      <span className="text-[10px] text-indigo-650 dark:text-indigo-400 font-bold block mt-1">
-                        Lead: {proj.leadId}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-1 italic">
-                        No Lead Assigned
-                      </span>
-                    )}
+                    <span className="text-[10px] text-slate-455 dark:text-slate-500 font-medium block max-w-md mt-0.5 leading-normal">{proj.desc}</span>
                   </td>
                   <td className="py-4 px-6 text-xs font-mono font-medium text-slate-500 dark:text-slate-400">{proj.clientEmail}</td>
                   <td className="py-4 px-6">
@@ -121,7 +114,7 @@ export default function ProjectsTab({ projects, projectLeads = [], onCreateProje
                       proj.status === 'Completed'
                         ? 'bg-emerald-50 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/30'
                         : proj.status === 'On Hold'
-                          ? 'bg-amber-50 dark:bg-amber-950/45 text-amber-700 dark:text-amber-450 border-amber-100 dark:border-amber-900/30'
+                          ? 'bg-amber-50 dark:bg-amber-950/45 text-amber-700 dark:text-amber-455 border-amber-100 dark:border-amber-900/30'
                           : 'bg-indigo-50 dark:bg-indigo-950/45 text-indigo-700 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/30'
                     }`}>
                       {proj.status}
@@ -131,14 +124,14 @@ export default function ProjectsTab({ projects, projectLeads = [], onCreateProje
                     <div className="flex flex-col space-y-1">
                       <button
                         onClick={() => handleGenerateLink(proj.clientAccessKey)}
-                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-450 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline flex items-center cursor-pointer text-left"
+                        className="text-[11px] font-bold text-indigo-600 dark:text-indigo-455 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center cursor-pointer text-left transition-colors"
                       >
                         <Link size={12} className="mr-1" />
                         <span>Generate Access Link</span>
                       </button>
                       <button
                         onClick={() => onViewProject && onViewProject(proj)}
-                        className="text-[11px] font-bold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline flex items-center cursor-pointer text-left"
+                        className="text-[11px] font-bold text-slate-600 dark:text-slate-405 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center cursor-pointer text-left transition-colors"
                       >
                         <Briefcase size={12} className="mr-1 text-slate-400 dark:text-slate-500" />
                         <span>Inspect Detailed Space</span>
@@ -146,13 +139,14 @@ export default function ProjectsTab({ projects, projectLeads = [], onCreateProje
                     </div>
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <button
-                      onClick={() => onSoftDelete(proj._id || proj.id)}
-                      className="p-1.5 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer"
-                      title="Move to Trash"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <Tooltip text="Move Project to Trash">
+                      <button
+                        onClick={() => onSoftDelete(proj._id || proj.id)}
+                        className="p-1.5 text-red-500 hover:text-red-700 border border-transparent hover:border-red-200 dark:hover:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </Tooltip>
                   </td>
                 </tr>
               ))}

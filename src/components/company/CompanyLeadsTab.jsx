@@ -3,7 +3,7 @@ import ProjectLeadsCrud from './ProjectLeadsCrud';
 import ClientLeadsCrud from './ClientLeadsCrud';
 import { Briefcase, Users, LayoutDashboard } from 'lucide-react';
 
-export default function CompanyLeadsTab({ companyId, token, onRefresh }) {
+export default function CompanyLeadsTab({ companyId, token, onRefresh, onGoToProject }) {
   const [subTab, setSubTab] = useState('projects'); // 'projects' | 'clients'
 
   return (
@@ -48,7 +48,7 @@ export default function CompanyLeadsTab({ companyId, token, onRefresh }) {
       {/* Main Content Area */}
       <div className="animate-transition">
         {subTab === 'projects' ? (
-          <ProjectLeadsCrud companyId={companyId} token={token} onRefresh={onRefresh} />
+          <ProjectLeadsCrud companyId={companyId} token={token} onRefresh={onRefresh} onGoToProject={onGoToProject} />
         ) : (
           <ClientLeadsCrud companyId={companyId} token={token} />
         )}

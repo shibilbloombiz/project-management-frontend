@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../config';
-import { ArrowLeft, User, Briefcase, CheckCircle2, Clock, Calendar, Download } from 'lucide-react';
+import { ArrowLeft, User, Briefcase, CheckCircle2, Clock, Calendar, Download, CalendarClock } from 'lucide-react';
 
 const STATUS_COLORS = {
   Done: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -27,7 +27,7 @@ const getTaskBucket = (status) => {
   return status;
 };
 
-export default function EmployeeDetailPage({ employee, token, onBack, attendance, leaves }) {
+export default function EmployeeDetailPage({ employee, token, onBack, attendance, leaves, onMarkAttendance }) {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
 
@@ -98,15 +98,21 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => downloadReport(`${BASE}/api/employees/${empId}/attendance/report`, 'attendance_report.csv')}
+            onClick={() => onMarkAttendance && onMarkAttendance(employee.email)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 cursor-pointer transition-colors"
+          >
+            <CalendarClock size={13} className="text-indigo-500" /> Mark Attendance
+          </button>
+          <button
+            onClick={() => downloadReport(`${BASE}/api/employees/${empId}/attendance/report`, 'attendance_report.pdf')}
             className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-100 cursor-pointer"
           >
             <Download size={13} /> Attendance Report
           </button>
           <button
-            onClick={() => downloadReport(`${BASE}/api/employees/${empId}/payment/report`, 'payment_report.csv')}
+            onClick={() => downloadReport(`${BASE}/api/employees/${empId}/payment/report`, 'payment_report.pdf')}
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-100 cursor-pointer"
           >
             <Download size={13} /> Payment Report

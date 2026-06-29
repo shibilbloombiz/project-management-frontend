@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import useCompanyAdminDashboard from '../../hooks/useCompanyAdminDashboard';
 import { getToken } from '../../utils/dashboardUtils';
 import FloatingChat from '../FloatingChat';
@@ -48,6 +48,12 @@ export default function CompanyAdminDashboard({
     floatingChatContacts,
   } = useCompanyAdminDashboard(userEmail, companyId, initialOrg);
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       <CompanyTopNav
@@ -72,9 +78,18 @@ export default function CompanyAdminDashboard({
           onClickProfile?.();
         }}
         userEmail={userEmail}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col md:flex-row relative">
+        {isSidebarOpen && (
+          <div
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm md:hidden animate-fade-in"
+          />
+        )}
+
         <CompanySidebar
           activeTab={activeTab}
           onSelectTab={(tab) => {
@@ -90,6 +105,7 @@ export default function CompanyAdminDashboard({
           org={org}
           onLogout={onLogout}
           projectLeads={data.projectLeads}
+          isOpen={isSidebarOpen}
         />
 
         <CompanyMainContent

@@ -1,12 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileDown, CalendarClock, Clock, Check, X, ShieldAlert, Plus, Share2, MapPin, Mail, MessageCircle } from 'lucide-react';
+import { Users, FileDown, CalendarClock, CalendarCheck, Clock, Check, X, ShieldAlert, Plus, Share2, MapPin, Mail, MessageCircle, RotateCw, Edit2, Trash2 } from 'lucide-react';
 import AddEmployeeModal from './AddEmployeeModal';
+import EditEmployeeModal from './EditEmployeeModal';
 import { API_BASE_URL } from '../../config';
-
-export default function EmployeesTab({ employees, attendance = [], leaves = [], onApproveLeave, onDeclineLeave, org, onRefreshEmployees, token, onViewEmployee, companyDetails }) {
+import { downloadFormalReportPdf } from '../../utils/pdfExport';
+import MarkAttendancePage from './MarkAttendancePage';
+import Tooltip from '../Tooltip';
+export default function EmployeesTab({
+  employees,
+  attendance = [],
+  leaves = [],
+  onApproveLeave,
+  onDeclineLeave,
+  org,
+  onRefreshEmployees,
+  token,
+  onViewEmployee,
+  companyDetails,
+  onMarkAttendance,
+  attendanceMarkEmail,
+  setAttendanceMarkEmail
+}) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [showMarkAttendanceModal, setShowMarkAttendanceModal] = useState(false);
   const [showSendLinkMenu, setShowSendLinkMenu] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterType, setFilterType] = useState('today');
+
+  useEffect(() => {
+    if (attendanceMarkEmail) {
+      setShowMarkAttendanceModal(true);
+    }
+  }, [attendanceMarkEmail]);
+
+  const handleCloseMarkAttendance = () => {
+    setShowMarkAttendanceModal(false);
+    if (setAttendanceMarkEmail) {
+      setAttendanceMarkEmail('');
+    }
+  };
+
+  const isOnLeaveToday = (email) => {
+    if (!leaves || !email) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return leaves.some(leave => {
+      if (leave.email.toLowerCase() !== email.toLowerCase()) return false;
+      if (leave.status !== 'Approved') return false;
+
+      const start = new Date(leave.startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(leave.endDate);
+      end.setHours(0, 0, 0, 0);
+
+      return today >= start && today <= end;
+    });
+  };
   const [filterDate, setFilterDate] = useState(() => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -115,29 +167,70 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
     alert(`Portal access invite for ${emp.name} copied to clipboard!`);
   };
 
-  // Compiles and exports attendance data as CSV
-  const handleDownloadCSV = () => {
+  const handleDeleteEmployee = async (emp) => {
+    if (!window.confirm(`Are you sure you want to permanently delete employee ${emp.name}?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/employees/${emp._id || emp.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('Employee deleted successfully.');
+        if (onRefreshEmployees) onRefreshEmployees();
+      } else {
+        alert(data.message || 'Failed to delete employee.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Connection error during deletion.');
+    }
+  };
+
+  // Compiles and exports attendance data as PDF
+  const handleDownloadPDF = () => {
     if (filteredAttendance.length === 0) {
       alert('No attendance data available to export.');
       return;
     }
 
-    let csvContent = 'data:text/csv;charset=utf-8,';
-    csvContent += 'Date,Employee Name,Email Address,Check In Time,Check Out Time,Shift Duration\n';
-    
-    filteredAttendance.forEach(log => {
+    const tableRows = filteredAttendance.map(log => {
       const duration = log.duration || '-';
       const checkOut = log.checkOut || '-';
-      csvContent += `"${log.date}","${log.name}","${log.email}","${log.checkIn}","${checkOut}","${duration}"\n`;
+      return [
+        log.date || '-',
+        log.name || '-',
+        log.email || '-',
+        log.checkIn || '-',
+        checkOut,
+        duration
+      ];
     });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `attendance_report_${org.toLowerCase().replace(/\s+/g, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFormalReportPdf({
+      title: 'Shift Attendance Register',
+      subtitle: `${org} - Attendance Log Report`,
+      meta: [
+        ['Total Logged Days/Sessions', filteredAttendance.length.toString()],
+        ['Report Generated', new Date().toLocaleDateString()]
+      ],
+      sections: [
+        {
+          heading: 'Check-In Records',
+          table: {
+            headers: ['Date', 'Employee Name', 'Email Address', 'Check-In', 'Check-Out', 'Duration'],
+            widths: [75, 110, 130, 60, 60, 52],
+            rows: tableRows
+          }
+        }
+      ]
+    }, `attendance_report_${org.toLowerCase().replace(/\s+/g, '_')}.pdf`);
   };
 
   return (
@@ -210,10 +303,10 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
                     </div>
                     <span
                       onClick={() => onViewEmployee && onViewEmployee(emp)}
-                      className="font-extrabold text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline cursor-pointer"
+                      className="font-extrabold text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
                     >{emp.name}</span>
                   </td>
-                  <td className="py-4 px-6 text-xs font-mono font-medium text-slate-550 dark:text-slate-450">{emp.email}</td>
+                  <td className="py-4 px-6 text-xs font-mono font-medium text-slate-555 dark:text-slate-455">{emp.email}</td>
                   <td className="py-4 px-6">
                     <span className="px-2 py-0.5 text-[10px] font-bold rounded-full border bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700">
                       {emp.role}
@@ -221,19 +314,50 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
                   </td>
                   <td className="py-4 px-6 text-xs text-slate-400 dark:text-slate-500 font-medium">{emp.date || 'N/A'}</td>
                   <td className="py-4 px-6">
-                    <span className="flex items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-450">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                      {emp.status}
-                    </span>
+                    {isOnLeaveToday(emp.email) ? (
+                      <span className="flex items-center text-[10px] font-bold text-amber-600 dark:text-amber-455">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+                        On Leave
+                      </span>
+                    ) : (
+                      <span className="flex items-center text-[10px] font-bold text-emerald-600 dark:text-emerald-455">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                        {emp.status}
+                      </span>
+                    )}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    <button
-                      onClick={() => handleCopyPortalLink(emp)}
-                      className="text-[10px] font-bold text-indigo-600 dark:text-indigo-455 hover:text-indigo-800 dark:hover:text-indigo-350 hover:underline flex items-center justify-end cursor-pointer ml-auto"
-                    >
-                      <Share2 size={11} className="mr-1" />
-                      <span>Invite</span>
-                    </button>
+                    <div className="flex items-center justify-end space-x-3">
+                      <button
+                        onClick={() => {
+                          if (setAttendanceMarkEmail) setAttendanceMarkEmail(emp.email);
+                          setShowMarkAttendanceModal(true);
+                        }}
+                        className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center cursor-pointer transition-colors"
+                      >
+                        <CalendarClock size={11} className="mr-1 text-slate-400" />
+                        <span>Mark Attendance</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setEditingEmployee(emp);
+                          setShowEditModal(true);
+                        }}
+                        className="text-[10px] font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center cursor-pointer transition-colors"
+                      >
+                        <Edit2 size={11} className="mr-1 text-slate-400" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteEmployee(emp)}
+                        className="text-[10px] font-bold text-red-500 hover:text-red-700 flex items-center cursor-pointer transition-colors"
+                      >
+                        <Trash2 size={11} className="mr-1 text-red-400" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -254,12 +378,31 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
         token={token}
       />
 
-      {/* GPS Geofencing Settings Panel */}
-      <GPSGeofencingSettings 
-        companyDetails={companyDetails} 
-        token={token} 
-        onRefresh={onRefreshEmployees} 
+      <EditEmployeeModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingEmployee(null);
+        }}
+        onSaveSuccess={onRefreshEmployees}
+        token={token}
+        employee={editingEmployee}
       />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* GPS Geofencing Settings Panel */}
+        <GPSGeofencingSettings 
+          companyDetails={companyDetails} 
+          token={token} 
+          onRefresh={onRefreshEmployees} 
+        />
+        {/* Attendance Portal Settings Panel */}
+        <AttendancePortalSettings 
+          companyDetails={companyDetails} 
+          token={token} 
+          onRefresh={onRefreshEmployees} 
+        />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
@@ -269,27 +412,41 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <div>
                 <h3 className="text-md font-extrabold font-display text-slate-800 dark:text-white flex items-center">
-                  <CalendarClock size={16} className="text-indigo-600 dark:text-indigo-400 mr-2" /> Shift Attendance Registers
+                  <CalendarCheck size={16} className="text-indigo-600 dark:text-indigo-400 mr-2" /> Shift Attendance Registers
                 </h3>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">Real-time daily employee check-in logs.</p>
               </div>
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => {
-                    if (onRefreshEmployees) onRefreshEmployees();
-                  }}
-                  className="p-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl cursor-pointer transition-colors text-xs font-bold shadow-sm"
-                  title="Refresh Register"
-                >
-                  Refresh
-                </button>
-                <button
-                  onClick={handleDownloadCSV}
-                  className="p-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-650 dark:text-slate-405 hover:text-slate-800 dark:hover:text-white rounded-xl cursor-pointer transition-colors flex items-center space-x-1.5 font-bold text-xs shrink-0 shadow-sm"
-                >
-                  <FileDown size={14} />
-                  <span>Export CSV</span>
-                </button>
+                <Tooltip text="Mark Attendance">
+                  <button
+                    onClick={() => setShowMarkAttendanceModal(true)}
+                    className="w-9 h-9 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl cursor-pointer shadow-md hover:shadow-lg transition-all flex items-center justify-center shrink-0"
+                  >
+                    <CalendarCheck size={14} />
+                  </button>
+                </Tooltip>
+
+                <Tooltip text="Refresh Register">
+                  <button
+                    onClick={() => {
+                      setIsRefreshing(true);
+                      if (onRefreshEmployees) onRefreshEmployees();
+                      setTimeout(() => setIsRefreshing(false), 800);
+                    }}
+                    className="w-9 h-9 border border-slate-200 hover:border-indigo-500/30 hover:bg-indigo-500/5 text-slate-650 hover:text-indigo-650 dark:border-slate-800 dark:hover:bg-slate-850 dark:text-slate-400 dark:hover:text-indigo-400 rounded-xl cursor-pointer transition-all flex items-center justify-center shrink-0 bg-white dark:bg-slate-900"
+                  >
+                    <RotateCw size={14} className={isRefreshing ? "animate-spin text-indigo-500" : "text-slate-400 dark:text-slate-500"} />
+                  </button>
+                </Tooltip>
+
+                <Tooltip text="Export PDF Report">
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="w-9 h-9 border border-rose-200 dark:border-rose-900/40 bg-rose-50/30 dark:bg-rose-950/10 hover:bg-rose-600 dark:hover:bg-rose-700 hover:border-rose-600 text-rose-600 dark:text-rose-455 hover:text-white rounded-xl cursor-pointer transition-all flex items-center justify-center shrink-0 shadow-sm"
+                  >
+                    <FileDown size={14} />
+                  </button>
+                </Tooltip>
               </div>
             </div>
 
@@ -446,6 +603,15 @@ export default function EmployeesTab({ employees, attendance = [], leaves = [], 
 
       </div>
 
+      <MarkAttendancePage
+        isOpen={showMarkAttendanceModal}
+        onClose={handleCloseMarkAttendance}
+        employees={employees}
+        attendance={attendance}
+        token={token}
+        onRefresh={onRefreshEmployees}
+        initialSelectedEmail={attendanceMarkEmail}
+      />
     </div>
   );
 }
@@ -532,54 +698,164 @@ function GPSGeofencingSettings({ companyDetails, token, onRefresh }) {
         </div>
       </div>
 
-      <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs font-semibold text-slate-700 dark:text-slate-350">
-        <div>
-          <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display">Office Latitude</label>
-          <input 
-            type="number" 
-            step="0.000001"
-            placeholder="e.g. 37.7749" 
-            value={gpsLat} 
-            onChange={(e) => setGpsLat(e.target.value)} 
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
-          />
+      <form onSubmit={handleSaveSettings} className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display font-bold">Office Latitude</label>
+            <input 
+              type="number" 
+              step="0.000001"
+              placeholder="e.g. 37.7749" 
+              value={gpsLat} 
+              onChange={(e) => setGpsLat(e.target.value)} 
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display font-bold">Office Longitude</label>
+            <input 
+              type="number" 
+              step="0.000001"
+              placeholder="e.g. -122.4194" 
+              value={gpsLng} 
+              onChange={(e) => setGpsLng(e.target.value)} 
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display font-bold">Allowed Radius (meters)</label>
+            <input 
+              type="number" 
+              min="10"
+              max="10000"
+              placeholder="200" 
+              value={gpsRad} 
+              onChange={(e) => setGpsRad(e.target.value)} 
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display">Office Longitude</label>
-          <input 
-            type="number" 
-            step="0.000001"
-            placeholder="e.g. -122.4194" 
-            value={gpsLng} 
-            onChange={(e) => setGpsLng(e.target.value)} 
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display">Allowed Radius (meters)</label>
-          <input 
-            type="number" 
-            min="10"
-            max="10000"
-            placeholder="200" 
-            value={gpsRad} 
-            onChange={(e) => setGpsRad(e.target.value)} 
-            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none"
-          />
-        </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 pt-2 justify-end">
           <button 
             type="button" 
             onClick={handleDetectLocation}
             disabled={detecting}
-            className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-650 dark:text-slate-350 rounded-xl cursor-pointer text-center font-extrabold hover:text-slate-850 dark:hover:text-white border border-slate-250 dark:border-slate-700 disabled:opacity-60 transition-colors"
+            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-650 dark:text-slate-350 rounded-xl cursor-pointer text-center font-extrabold hover:text-slate-850 dark:hover:text-white border border-slate-250 dark:border-slate-700 disabled:opacity-60 transition-colors"
           >
             {detecting ? 'Detecting...' : 'Detect Coordinates'}
           </button>
           <button 
             type="submit"
             disabled={loading}
-            className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl cursor-pointer text-center font-extrabold shadow-md shadow-indigo-950 disabled:bg-slate-800/60 transition-colors"
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl cursor-pointer text-center font-extrabold shadow-md shadow-indigo-950 disabled:bg-slate-800/60 transition-colors"
+          >
+            {loading ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function AttendancePortalSettings({ companyDetails, token, onRefresh }) {
+  const [enabled, setEnabled] = useState(companyDetails?.attendancePortalEnabled !== false);
+  const [openTime, setOpenTime] = useState(companyDetails?.attendancePortalOpenTime || '09:00');
+  const [closeTime, setCloseTime] = useState(companyDetails?.attendancePortalCloseTime || '18:00');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (companyDetails) {
+      setEnabled(companyDetails.attendancePortalEnabled !== false);
+      setOpenTime(companyDetails.attendancePortalOpenTime || '09:00');
+      setCloseTime(companyDetails.attendancePortalCloseTime || '18:00');
+    }
+  }, [companyDetails]);
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    if (!companyDetails) return;
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/companies/${companyDetails.id || companyDetails._id || companyDetails.companyId}/plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          attendancePortalEnabled: enabled,
+          attendancePortalOpenTime: openTime,
+          attendancePortalCloseTime: closeTime
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        alert('Attendance Portal Hours updated successfully!');
+        if (onRefresh) onRefresh();
+      } else {
+        alert(data.message || 'Failed to save settings.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error saving attendance portal configurations.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-6 text-left space-y-4">
+      <div className="flex items-center space-x-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="p-2 bg-emerald-50 dark:bg-emerald-950/45 rounded-xl text-emerald-650 dark:text-emerald-450">
+          <Clock size={18} />
+        </div>
+        <div>
+          <h3 className="text-sm font-extrabold text-slate-800 dark:text-white">Attendance Portal Hours Settings</h3>
+          <p className="text-[11px] text-slate-405 dark:text-slate-500 font-semibold mt-0.5">Configure when employees can clock in or check out.</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSaveSettings} className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
+        <div>
+          <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display font-bold">Portal Open Time</label>
+          <input 
+            type="time" 
+            value={openTime} 
+            onChange={(e) => setOpenTime(e.target.value)} 
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none cursor-pointer"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 font-display font-bold">Portal Close Time</label>
+          <input 
+            type="time" 
+            value={closeTime} 
+            onChange={(e) => setCloseTime(e.target.value)} 
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none cursor-pointer"
+            required
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 py-2">
+          <input 
+            type="checkbox" 
+            id="portalEnabledTabChk"
+            checked={enabled} 
+            onChange={(e) => setEnabled(e.target.checked)} 
+            className="rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700 dark:bg-slate-800 cursor-pointer"
+          />
+          <label htmlFor="portalEnabledTabChk" className="text-xs font-extrabold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+            Attendance Portal Enabled
+          </label>
+        </div>
+
+        <div className="flex justify-end">
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl cursor-pointer text-center font-extrabold shadow-md shadow-indigo-950 disabled:bg-slate-800/60 transition-colors"
           >
             {loading ? 'Saving...' : 'Save Settings'}
           </button>

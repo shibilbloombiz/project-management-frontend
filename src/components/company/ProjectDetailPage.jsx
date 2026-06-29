@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../config";
-import { ArrowLeft, DollarSign, RefreshCw, MessageSquare } from "lucide-react";
+import { ArrowLeft, DollarSign, RefreshCw, MessageSquare, Download } from "lucide-react";
 import ProjectMessagePortal from "./ProjectMessagePortal";
 import ProjectPipeline from "./projectDetail/ProjectPipeline";
 import ProjectDeploymentCard from "./projectDetail/ProjectDeploymentCard";
@@ -11,6 +11,7 @@ import ProjectAssetsCard from "./projectDetail/ProjectAssetsCard";
 import TaskBoard from "./projectDetail/TaskBoard";
 import TaskSpecsModal from "./projectDetail/TaskSpecsModal";
 import InvoiceManager from "./projectDetail/InvoiceManager";
+import { downloadProjectReportPdf } from "../../utils/projectReportPdf";
 
 const BASE = API_BASE_URL;
 
@@ -37,7 +38,10 @@ export default function ProjectDetailPage({
   token,
   userEmail,
   adminName,
-  employees = []
+  employees = [],
+  companyName,
+  companyLogo,
+  onProjectUpdated
 }) {
   const [project, setProject] = useState(initialProject);
   const [isLoading, setIsLoading] = useState(false);
@@ -243,6 +247,7 @@ export default function ProjectDetailPage({
         const updated = result.data.find(p => (p._id || p.id) === projId);
         if (updated) {
           setProject(updated);
+          if (onProjectUpdated) onProjectUpdated(updated);
           setError(null);
         } else {
           setError("Project not found in organization database.");
@@ -364,6 +369,8 @@ export default function ProjectDetailPage({
     });
     if (data.success && data.data) {
       setProject(data.data);
+      if (onProjectUpdated) onProjectUpdated(data.data);
+      await fetchProjectDetails(true);
       setError(null);
     } else {
       throw new Error(data.message || "Failed to update task.");
@@ -502,10 +509,23 @@ export default function ProjectDetailPage({
             <p className="text-xs text-slate-400 dark:text-slate-550 font-medium mt-0.5">Project Scope detailed dashboard & pipeline monitoring.</p>
           </div>
         </div>
-        <button onClick={() => fetchProjectDetails(true)} className="flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-605 dark:text-slate-400 cursor-pointer">
-          <RefreshCw size={12} className="animate-spin-hover" />
-          <span>Refresh Data</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => downloadProjectReportPdf(project, {
+              companyName,
+              companyLogo,
+              projectManager: adminName,
+            })}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold cursor-pointer shadow-md shadow-indigo-100 dark:shadow-none"
+          >
+            <Download size={12} />
+            <span>Download Project Report</span>
+          </button>
+          <button onClick={() => fetchProjectDetails(true)} className="flex items-center space-x-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-605 dark:text-slate-400 cursor-pointer">
+            <RefreshCw size={12} className="animate-spin-hover" />
+            <span>Refresh Data</span>
+          </button>
+        </div>
       </div>
 
       {/* Edit Project Details Panel */}
