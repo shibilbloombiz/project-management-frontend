@@ -25,6 +25,9 @@ export default function useCompanyAdminDashboard(userEmail, companyId, initialOr
     autopay: true,
     plan: '',
     users: 0,
+    attendancePortalEnabled: true,
+    attendancePortalOpenTime: '09:00',
+    attendancePortalCloseTime: '18:00',
   });
 
   const [dismissedIds, setDismissedIds] = useState(() => {
@@ -142,7 +145,15 @@ export default function useCompanyAdminDashboard(userEmail, companyId, initialOr
       if (deletedProjectsRes?.success) setDeletedProjects(deletedProjectsRes.data || []);
       if (employeesRes?.success) setEmployees(employeesRes.data || []);
       if (projectLeadsRes?.success) setProjectLeads(projectLeadsRes.data || []);
-      if (attendanceRes?.success) setAttendance(attendanceRes.data || []);
+      if (attendanceRes?.success) {
+        let merged = attendanceRes.data || [];
+        try {
+          const locals = JSON.parse(localStorage.getItem('local_attendance_logs') || '[]');
+          const companyLocals = locals.filter(l => l.companyId === companyId);
+          merged = [...companyLocals, ...merged];
+        } catch (e) {}
+        setAttendance(merged);
+      }
       if (leavesRes?.success) setLeaves(leavesRes.data || []);
       if (clientsRes?.success) setClients(clientsRes.data || []);
       if (deletedClientsRes?.success) setDeletedClients(deletedClientsRes.data || []);
@@ -169,6 +180,9 @@ export default function useCompanyAdminDashboard(userEmail, companyId, initialOr
             autopay: matchedCompany.autopay !== false,
             plan: matchedCompany.plan || '',
             users: matchedCompany.users || 0,
+            attendancePortalEnabled: matchedCompany.attendancePortalEnabled !== false,
+            attendancePortalOpenTime: matchedCompany.attendancePortalOpenTime || '09:00',
+            attendancePortalCloseTime: matchedCompany.attendancePortalCloseTime || '18:00',
           }));
         }
       }
@@ -479,3 +493,6 @@ export default function useCompanyAdminDashboard(userEmail, companyId, initialOr
     floatingChatContacts,
   };
 }
+
+
+

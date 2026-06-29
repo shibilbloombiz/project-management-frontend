@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import ProjectsTab from '../ProjectsTab';
 import EmployeesTab from '../EmployeesTab';
 import CompanyLeadsTab from '../CompanyLeadsTab';
@@ -6,7 +7,8 @@ import CompanyTrashTab from '../CompanyTrashTab';
 import ProjectDetailPage from '../ProjectDetailPage';
 import EmployeeDetailPage from '../EmployeeDetailPage';
 import CompanyBillingPanel from './CompanyBillingPanel';
-import CompanyKpiGrid from './CompanyKpiGrid';
+import MarkAttendancePage from '../MarkAttendancePage';
+import TasksTab from '../../TasksTab';
 
 export default function CompanyMainContent({
   loading,
@@ -26,10 +28,10 @@ export default function CompanyMainContent({
   handlers,
   billing,
 }) {
-  return (
-    <main className="flex-grow p-6 md:p-8 space-y-8 overflow-y-auto max-h-[calc(100vh-62px)]">
-      <Header org={org} projectsCount={data?.projects?.length || 0} />
+  const [attendanceMarkEmail, setAttendanceMarkEmail] = useState('');
 
+  return (
+    <main className="flex-grow min-w-0 p-6 md:p-8 space-y-8 overflow-y-auto max-h-[calc(100vh-62px)]">
       {loading ? (
         <div className="p-8 text-center text-slate-400 font-semibold text-xs flex items-center justify-center space-x-2">
           <div className="w-4 h-4 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin"></div>
@@ -42,6 +44,11 @@ export default function CompanyMainContent({
           onBack={() => setSelectedEmployee(null)}
           attendance={data?.attendance || []}
           leaves={data?.leaves || []}
+          onMarkAttendance={(email) => {
+            setAttendanceMarkEmail(email);
+            setSelectedEmployee(null);
+            setActiveTab('employees');
+          }}
         />
       ) : selectedProject ? (
         <ProjectDetailPage
@@ -51,58 +58,36 @@ export default function CompanyMainContent({
           userEmail={userEmail}
           adminName={adminName}
           employees={data?.employees || []}
+          companyName={billing?.companyDetails?.name || org}
+          companyLogo={billing?.companyDetails?.logo || ''}
+          onProjectUpdated={(updatedProject) => {
+            setSelectedProject(updatedProject);
+            if (typeof loadData === 'function') loadData();
+          }}
         />
       ) : (
-        <>
-          <CompanyKpiGrid {...metrics} onSelectTab={setActiveTab} />
-
-          <div className="mt-8">
-            <TabContent
-              activeTab={activeTab}
-              org={org}
-              data={data}
-              handlers={handlers}
-              loadData={loadData}
-              setSelectedProject={setSelectedProject}
-              setSelectedEmployee={setSelectedEmployee}
-              billing={billing}
-              userEmail={userEmail}
-              companyId={companyId}
-              adminName={adminName}
-            />
-          </div>
-        </>
+        <TabContent
+          activeTab={activeTab}
+          org={org}
+          data={data}
+          handlers={handlers}
+          loadData={loadData}
+          setSelectedProject={setSelectedProject}
+          setSelectedEmployee={setSelectedEmployee}
+          billing={billing}
+          userEmail={userEmail}
+          companyId={companyId}
+          adminName={adminName}
+          setActiveTab={setActiveTab}
+          attendanceMarkEmail={attendanceMarkEmail}
+          setAttendanceMarkEmail={setAttendanceMarkEmail}
+        />
       )}
     </main>
   );
 }
 
-function Header({ org, projectsCount }) {
-  return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 text-left animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-extrabold font-display text-slate-900 dark:text-white tracking-tight">
-          Console Dashboard
-        </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-          Workspace metrics and live collaboration status registers for {org}.
-        </p>
-      </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="flex items-center text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200/80 dark:border-slate-800">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1.5"></span>
-          {projectsCount} Active Nodes
-        </span>
-
-        <span className="flex items-center text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200/80 dark:border-slate-800">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-          Connection Status: Active
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function TabContent({
   activeTab,
@@ -116,6 +101,9 @@ function TabContent({
   userEmail,
   companyId,
   adminName,
+  setActiveTab,
+  attendanceMarkEmail,
+  setAttendanceMarkEmail,
 }) {
   const token = sessionStorage.getItem('syncra_token');
 
@@ -147,6 +135,8 @@ function TabContent({
         token={token}
         onViewEmployee={setSelectedEmployee}
         companyDetails={billing?.companyDetails}
+        attendanceMarkEmail={attendanceMarkEmail}
+        setAttendanceMarkEmail={setAttendanceMarkEmail}
       />
     );
   }
@@ -158,6 +148,15 @@ function TabContent({
         token={token}
         employees={data?.employees || []}
         onRefresh={loadData}
+        onGoToProject={(projId) => {
+          const found = (data?.projects || []).find(p => (p._id || p.id) === projId);
+          if (found) {
+            setSelectedProject(found);
+            setActiveTab('projects');
+          } else {
+            alert("Project details not found.");
+          }
+        }}
       />
     );
   }
@@ -213,7 +212,17 @@ function TabContent({
     );
   }
 
-
+  if (activeTab === 'tasks') {
+    return (
+      <TasksTab
+        role="Company Admin"
+        token={token}
+        userEmail={userEmail}
+        adminName={adminName}
+        onRefresh={loadData}
+      />
+    );
+  }
 
   return null;
 }

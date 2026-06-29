@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Layers, ShieldCheck } from 'lucide-react';
+import { Bell, Layers, ShieldCheck, Menu } from 'lucide-react';
 import NotificationsDropdown from '../../NotificationsDropdown';
 import ThemeToggle from '../../ThemeToggle';
 
@@ -15,6 +15,8 @@ export default function CompanyTopNav({
   onNavigate,
   onClickProfile,
   userEmail = 'peter.gibbons@initech.com',
+  isSidebarOpen,
+  onToggleSidebar,
 }) {
   const [avatarUrl, setAvatarUrl] = useState(null);
 
@@ -43,6 +45,13 @@ export default function CompanyTopNav({
   return (
     <nav className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 shadow-sm px-6 py-3 flex items-center justify-between">
       <div className="flex items-center space-x-3">
+        <button
+          onClick={onToggleSidebar}
+          className="md:hidden p-1.5 text-slate-500 hover:text-indigo-650 dark:text-slate-400 dark:hover:text-indigo-400 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer mr-1"
+          aria-label="Toggle Sidebar Menu"
+        >
+          <Menu size={18} className={`transform transition-transform duration-300 ${isSidebarOpen ? 'rotate-90' : ''}`} />
+        </button>
         <div className="p-2 bg-gradient-to-tr from-brand-purple to-brand-cyan rounded-lg text-white">
           <Layers size={18} />
         </div>
@@ -93,11 +102,11 @@ export default function CompanyTopNav({
           onClick={onClickProfile}
           className="flex items-center pl-2 border-l border-slate-200 dark:border-slate-800 gap-3 cursor-pointer hover:opacity-85 transition-opacity"
         >
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <span className="text-xs font-extrabold text-slate-900 dark:text-slate-200 block font-display leading-tight">
               {adminName}
             </span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-505 font-bold block">
+            <span className="text-[10px] text-slate-400 dark:text-slate-555 font-bold block">
               Company Administrator
             </span>
           </div>

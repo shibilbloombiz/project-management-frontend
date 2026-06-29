@@ -1,49 +1,46 @@
-import React, { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "../config";
-import { Check, ShieldAlert, Sparkles, Building, Layers, ArrowRight, CreditCard, User, Calendar } from "lucide-react";
+import { Building, ArrowRight } from "lucide-react";
 
 export default function PlanSelection({
-  plans = [],
+  plans: propPlans = [],
   companyId,
   companyName,
   onPlanSelected
 }) {
-  const [selectedPlan, setSelectedPlan] = useState("Starter Package");
+  const [plans, setPlans] = useState(propPlans);
+  const [selectedPlan, setSelectedPlan] = useState("");
   const [seats, setSeats] = useState(15);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const defaultPlans = [{
-    name: "Free",
-    price: 0,
-    limit: "5 Users",
-    maxUsers: 5,
-    maxProjects: 3,
-    features: ["Limited capacity scope", "In-memory fallback store resilience", "Shared client portals"]
-  }, {
-    name: "Starter Package",
-    price: 2500,
-    limit: "15 Users",
-    maxUsers: 15,
-    maxProjects: 10,
-    features: ["Starter PM modules", "Daily persistent checkpoints", "SaaS client gateways"]
-  }, {
-    name: "Scale Package Tier",
-    price: 8900,
-    limit: "50 Users",
-    maxUsers: 50,
-    maxProjects: 30,
-    features: ["Automated shift attendance logs", "Excel/CSV download reports", "Soft-delete trash bin"]
-  }, {
-    name: "Enterprise SaaS Tier",
-    price: 25000,
-    limit: "Unlimited Users",
-    maxUsers: 99999,
-    maxProjects: 99999,
-    features: ["SLA dashboard nodes", "Custom corporate domain config", "Dedicated technical support"]
-  }];
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/plans`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data && data.data.length > 0) {
+          setPlans(data.data);
+        }
+      })
+      .catch(err => console.error("Failed to fetch plans inside PlanSelection:", err));
+  }, []);
 
-  const currentPlans = plans && plans.length > 0 ? [...plans].sort((a, b) => a.price - b.price) : defaultPlans;
+  const currentPlans = useMemo(
+    () => (plans || []).filter(Boolean).sort((a, b) => Number(a.price) - Number(b.price)),
+    [plans]
+  );
+
+  useEffect(() => {
+    if (currentPlans.length === 0) {
+      setSelectedPlan("");
+      return;
+    }
+    if (!currentPlans.some(p => p.name === selectedPlan)) {
+      const firstPlan = currentPlans[0];
+      setSelectedPlan(firstPlan.name);
+      setSeats(firstPlan.maxUsers === 99999 ? 120 : firstPlan.maxUsers || 1);
+    }
+  }, [currentPlans, selectedPlan]);
 
   const handlePlanChange = name => {
     setSelectedPlan(name);
@@ -70,6 +67,11 @@ export default function PlanSelection({
     const token = sessionStorage.getItem("syncra_token");
     const selectedDetails = currentPlans.find(p => p.name === selectedPlan);
     const amountVal = selectedDetails ? selectedDetails.price : 0;
+    if (!selectedDetails) {
+      setError("No subscription plan is available. Please ask the super admin to publish a plan.");
+      setLoading(false);
+      return;
+    }
 
     if (amountVal === 0) {
       try {
@@ -229,8 +231,8 @@ export default function PlanSelection({
     }
   };
 
-  const currentPlanDetails = currentPlans.find(p => p.name === selectedPlan) || defaultPlans[1];
-  const calculatedTotal = currentPlanDetails ? currentPlanDetails.price : 2500;
+  const currentPlanDetails = currentPlans.find(p => p.name === selectedPlan) || null;
+  const calculatedTotal = currentPlanDetails ? Number(currentPlanDetails.price) : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-955 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden transition-colors duration-205">
@@ -252,10 +254,6 @@ export default function PlanSelection({
               Confirm your workspace plan limits for <strong>{companyName || "Wayne Enterprises"}</strong>.
             </p>
           </div>
-          <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 px-3 py-1.5 rounded-xl shrink-0 text-xs text-slate-700 dark:text-slate-300">
-            <Building size={14} className="text-indigo-650 dark:text-indigo-400 animate-pulse" />
-            <span className="font-extrabold">Company ID: {companyId}</span>
-          </div>
         </div>
 
         {error && (
@@ -265,6 +263,11 @@ export default function PlanSelection({
         )}
 
         {/* Plans Grid */}
+        {currentPlans.length === 0 ? (
+          <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-2xl bg-slate-50 dark:bg-slate-900 text-center text-xs font-bold text-slate-500 dark:text-slate-400">
+            No subscription plans are currently published by the super admin.
+          </div>
+        ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {currentPlans.map(p => {
             const isSelected = selectedPlan === p.name;
@@ -311,6 +314,7 @@ export default function PlanSelection({
             );
           })}
         </div>
+        )}
 
         {/* Workspace Seats config */}
         <div className="p-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs font-semibold text-slate-700 dark:text-slate-350">
@@ -351,7 +355,7 @@ export default function PlanSelection({
           </div>
           <button
             onClick={handleSelectPlan}
-            disabled={loading}
+            disabled={loading || currentPlans.length === 0}
             className="w-full md:w-auto px-8 py-3 bg-indigo-650 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold text-xs rounded-xl cursor-pointer transition-all shadow-md shadow-indigo-100 dark:shadow-none flex items-center justify-center space-x-2"
           >
             <span>{calculatedTotal === 0 ? "Activate Workspace" : "Authorize via Razorpay"}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Plus, Clock, Edit2, Trash2, X } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Plus, Clock, Edit2, Trash2, X } from 'lucide-react';
 
 const STATUS_COLORS = {
   Done: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/30",
@@ -27,6 +27,7 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
   const [editStatus, setEditStatus] = useState("Planning");
   const [editDeadline, setEditDeadline] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [notice, setNotice] = useState(null);
 
   useEffect(() => {
     if (editingTask) {
@@ -34,6 +35,7 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
       setEditAssignee(editingTask.assigneeEmail || "");
       setEditStatus(editingTask.status || "Planning");
       setEditDeadline(editingTask.deadline || "");
+      setNotice(null);
     }
   }, [editingTask]);
 
@@ -60,8 +62,9 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!editTitle.trim()) return;
+    if (!editTitle.trim() || isSavingEdit) return;
     setIsSavingEdit(true);
+    setNotice(null);
     try {
       await onUpdateTask(editingTask.id || editingTask._id, {
         title: editTitle.trim(),
@@ -69,9 +72,10 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
         status: editStatus,
         deadline: editDeadline
       });
+      setNotice({ type: 'success', message: 'Task updated successfully.' });
       setEditingTask(null);
     } catch (err) {
-      console.error(err);
+      setNotice({ type: 'error', message: err.message || 'Failed to update task. Please try again.' });
     } finally {
       setIsSavingEdit(false);
     }
@@ -96,6 +100,17 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
           <Plus size={12} /> Add Task
         </button>
       </div>
+
+      {notice && !editingTask && (
+        <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+          notice.type === 'success'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/30'
+            : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/30'
+        }`}>
+          {notice.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+          <span>{notice.message}</span>
+        </div>
+      )}
 
       {showTaskForm && (
         <form onSubmit={handleSubmit} className="space-y-3 p-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-left">
@@ -206,17 +221,29 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
               <button
                 type="button"
                 onClick={() => setEditingTask(null)}
+                disabled={isSavingEdit}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 p-1 rounded-xl cursor-pointer"
               >
                 <X size={16} />
               </button>
             </div>
+            {notice && (
+              <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                notice.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/30'
+                  : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/30'
+              }`}>
+                {notice.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                <span>{notice.message}</span>
+              </div>
+            )}
             <form onSubmit={handleEditSubmit} className="space-y-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
               <div>
                 <label className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Task Title</label>
                 <input
                   type="text"
                   required
+                  disabled={isSavingEdit}
                   value={editTitle}
                   onChange={e => setEditTitle(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -227,6 +254,7 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
                 <select
                   value={editAssignee}
                   onChange={e => setEditAssignee(e.target.value)}
+                  disabled={isSavingEdit}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value="">Select Assignee (optional)</option>
@@ -245,6 +273,7 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
                 <select
                   value={editStatus}
                   onChange={e => setEditStatus(e.target.value)}
+                  disabled={isSavingEdit}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
                   <option value="Planning">Planning</option>
@@ -259,6 +288,7 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
                   type="date"
                   value={editDeadline}
                   onChange={e => setEditDeadline(e.target.value)}
+                  disabled={isSavingEdit}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 />
               </div>
@@ -266,16 +296,18 @@ export default function TaskBoard({ tasks = [], employees = [], userEmail, admin
                 <button
                   type="button"
                   onClick={() => setEditingTask(null)}
+                  disabled={isSavingEdit}
                   className="px-4 py-2 bg-slate-105 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSavingEdit}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl cursor-pointer shadow-md transition-colors"
+                  disabled={isSavingEdit || !editTitle.trim()}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl cursor-pointer shadow-md transition-colors flex items-center gap-2"
                 >
-                  {isSavingEdit ? "Saving..." : "Save Changes"}
+                  {isSavingEdit && <Loader2 size={13} className="animate-spin" />}
+                  <span>{isSavingEdit ? "Saving..." : "Save Changes"}</span>
                 </button>
               </div>
             </form>

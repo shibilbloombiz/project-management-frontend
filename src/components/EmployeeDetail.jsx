@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from '../config';
 
 export default function EmployeeDetail({ employeeId }) {
   const [employee, setEmployee] = useState(null);
@@ -6,7 +7,12 @@ export default function EmployeeDetail({ employeeId }) {
 
   useEffect(() => {
     if (!employeeId) return;
-    fetch(`/api/employees/${employeeId}`)
+    const token = sessionStorage.getItem("syncra_token");
+    fetch(`${API_BASE_URL}/api/employees/${employeeId}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success) setEmployee(data.data);
@@ -16,7 +22,12 @@ export default function EmployeeDetail({ employeeId }) {
 
   const downloadFile = async (url, filename) => {
     try {
-      const res = await fetch(url);
+      const token = sessionStorage.getItem("syncra_token");
+      const res = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       const blob = await res.blob();
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
@@ -28,11 +39,11 @@ export default function EmployeeDetail({ employeeId }) {
   };
 
   const handleAttendanceDownload = () => {
-    downloadFile(`/api/employees/${employeeId}/attendance/report`, 'attendance_report.pdf');
+    downloadFile(`${API_BASE_URL}/api/employees/${employeeId}/attendance/report`, 'attendance_report.pdf');
   };
 
   const handlePaymentDownload = () => {
-    downloadFile(`/api/employees/${employeeId}/payment/report`, 'payment_report.pdf');
+    downloadFile(`${API_BASE_URL}/api/employees/${employeeId}/payment/report`, 'payment_report.pdf');
   };
 
   if (!employee) return <div>Loading employee...</div>;

@@ -11,6 +11,7 @@ import {
   MessageSquare,
   User,
   X,
+  CheckSquare,
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
 import EmployeeAttendance from './EmployeeAttendance';
@@ -19,6 +20,7 @@ import EmployeeLeaves from './EmployeeLeaves';
 import EmployeeLogin from './EmployeeLogin';
 import EmployeeProfile from './EmployeeProfile';
 import EmployeeProjects from './EmployeeProjects';
+import TasksTab from '../TasksTab';
 import FloatingChat from '../FloatingChat';
 import NotificationsDropdown from '../NotificationsDropdown';
 import ThemeToggle from '../ThemeToggle';
@@ -43,6 +45,7 @@ const Github = ({ size = 20, className = '' }) => (
 
 const tabs = [
   { id: 'attendance', label: 'Attendance', icon: Clock, component: EmployeeAttendance },
+  { id: 'tasks', label: 'Task Manager', icon: CheckSquare, component: TasksTab },
   { id: 'projects', label: 'Projects', icon: FolderGit2, component: EmployeeProjects },
   { id: 'leaves', label: 'Leaves', icon: Calendar, component: EmployeeLeaves },
   { id: 'github', label: 'GitHub', icon: Github, component: EmployeeGitHub },
@@ -66,8 +69,6 @@ export default function EmployeeDashboard({ onBackToLanding }) {
   const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [dismissedIds, setDismissedIds] = useState(getDismissedNotifications);
-  const [projectsCount, setProjectsCount] = useState(0);
-  const [pendingTasksCount, setPendingTasksCount] = useState(0);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   const activeNotifications = useMemo(
@@ -105,13 +106,18 @@ export default function EmployeeDashboard({ onBackToLanding }) {
         fetch(`${API_BASE_URL}/api/employee-portal/attendance/today`, { headers }),
       ]);
 
+      if (leavesRes.status === 401 || projectsRes.status === 401 || attendanceRes.status === 401) {
+        handleLogout();
+        return;
+      }
+
       const [leavesData, projectsData, attendanceData] = await Promise.all([
         leavesRes.json(),
         projectsRes.json(),
         attendanceRes.json(),
       ]);
 
-      setIsCheckedIn(Boolean(attendanceData.success && attendanceData.data?.checkIn));
+      setIsCheckedIn(Boolean(attendanceData.success && attendanceData.data?.checkIn && !attendanceData.data?.checkOut));
 
       const nextNotifications = [];
 
@@ -132,7 +138,6 @@ export default function EmployeeDashboard({ onBackToLanding }) {
 
       if (projectsData.success) {
         let pendingTasks = 0;
-        setProjectsCount(projectsData.data.length);
 
         projectsData.data.forEach((project) => {
           (project.tasks || []).forEach((task) => {
@@ -150,8 +155,6 @@ export default function EmployeeDashboard({ onBackToLanding }) {
             }
           });
         });
-
-        setPendingTasksCount(pendingTasks);
       }
 
       setNotifications(nextNotifications);
@@ -258,18 +261,19 @@ export default function EmployeeDashboard({ onBackToLanding }) {
           <div className="mx-auto max-w-7xl space-y-6">
             <DashboardHeader
               userProfile={userProfile}
-              projectsCount={projectsCount}
-              pendingTasksCount={pendingTasksCount}
               isCheckedIn={isCheckedIn}
-              onSelectTab={setActiveTab}
             />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:p-6">
               <ActiveComponent
+                role="Employee"
                 token={token}
                 user={userProfile}
+                userEmail={userProfile?.email}
+                adminName={userProfile?.name}
                 employeeEmail={userProfile?.email}
                 onRefreshProfile={() => fetchProfile(token)}
+                onAttendanceChange={setIsCheckedIn}
               />
             </section>
           </div>
@@ -438,13 +442,7 @@ function SidebarActions({ onLogout, onBackToLanding }) {
   );
 }
 
-function DashboardHeader({
-  userProfile,
-  projectsCount,
-  pendingTasksCount,
-  isCheckedIn,
-  onSelectTab,
-}) {
+function DashboardHeader({ userProfile, isCheckedIn }) {
   return (
     <header className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -467,60 +465,9 @@ function DashboardHeader({
           {isCheckedIn ? 'Checked In' : 'Not Checked In'}
         </span>
       </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <MetricCard
-          label="Projects"
-          value={projectsCount}
-          caption="Assigned"
-          icon={FolderGit2}
-          color="indigo"
-          onClick={() => onSelectTab('projects')}
-        />
-        <MetricCard
-          label="Open Tasks"
-          value={pendingTasksCount}
-          caption="Pending"
-          icon={Clock}
-          color="purple"
-          onClick={() => onSelectTab('projects')}
-        />
-        <MetricCard
-          label="Shift"
-          value={isCheckedIn ? 'Active' : 'Closed'}
-          caption="Today"
-          icon={Calendar}
-          color={isCheckedIn ? 'emerald' : 'amber'}
-          onClick={() => onSelectTab('attendance')}
-        />
-      </div>
     </header>
   );
 }
 
-function MetricCard({ label, value, caption, icon: Icon, color, onClick }) {
-  const colorClass = {
-    amber: 'bg-amber-50 text-amber-700 ring-amber-100',
-    emerald: 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-    indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-100',
-    purple: 'bg-purple-50 text-purple-700 ring-purple-100',
-  }[color];
 
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-indigo-200 hover:bg-slate-50"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">{label}</p>
-          <p className="mt-2 text-2xl font-extrabold text-slate-900">{value}</p>
-          <p className="mt-1 text-xs font-semibold text-slate-500">{caption}</p>
-        </div>
-        <span className={`rounded-xl p-2 ring-1 ${colorClass}`}>
-          <Icon size={16} />
-        </span>
-      </div>
-    </button>
-  );
-}
+

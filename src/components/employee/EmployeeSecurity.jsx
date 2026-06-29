@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { API_BASE_URL } from '../../config';
 import { ShieldCheck, Lock, KeyRound, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -104,7 +104,7 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
         </span>
         <div>
           <h2 className="text-xl font-bold text-white">Security Settings</h2>
-          <p className="text-xs text-slate-400">Manage your passwords, security credentials, and attendance pins.</p>
+          <p className="text-xs text-slate-400">Manage your password and security credentials.</p>
         </div>
       </div>
 
@@ -115,10 +115,10 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
             <span className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg">
               <KeyRound size={18} />
             </span>
-            <h3 className="text-sm font-bold text-white">Attendance Security PIN</h3>
+            <h3 className="text-sm font-bold text-white">Security PIN</h3>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Your 4 to 6-digit Security PIN is used to authorize clock-in and clock-out actions at the biometric/PIN attendance terminal. 
+            Your 4 to 6-digit Security PIN is saved with your employee security settings. 
             Default is <code className="bg-slate-900 px-1.5 py-0.5 rounded font-mono text-emerald-300">123456</code>.
           </p>
 
@@ -202,7 +202,7 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
               <input
                 id="old-pw"
                 type="password"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
@@ -216,7 +216,7 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
               <input
                 id="new-pw"
                 type="password"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
@@ -230,7 +230,7 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
               <input
                 id="confirm-pw"
                 type="password"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
@@ -257,3 +257,4 @@ export default function EmployeeSecurity({ token, user, onRefreshProfile }) {
     </div>
   );
 }
+

@@ -23,12 +23,4 @@ export const REGISTRATION_PLANS = [
     maxProjects: 30,
     features: ['Automated shift attendance logs', 'Excel/CSV download reports', 'Soft-delete trash bin'],
   },
-  {
-    name: 'Enterprise SaaS Tier',
-    price: 25000,
-    limit: 'Unlimited Users',
-    maxUsers: 99999,
-    maxProjects: 99999,
-    features: ['SLA dashboard nodes', 'Custom corporate domain config', 'Dedicated technical support'],
-  },
 ];

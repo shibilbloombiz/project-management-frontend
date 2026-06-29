@@ -3,6 +3,20 @@ import { FileDown, FileText, Download, Check } from 'lucide-react';
 import { clientPortalHelpers } from '../../utils/clientPortalHelpers';
 
 export default function ClientFilesPanel({ files }) {
+  const handleDownload = (file) => {
+    const url = file.url || file.fileData;
+    if (!url) {
+      alert(`Download URL not available for: ${file.name}`);
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   if (!files || files.length === 0) {
     return (
       <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-slate-400 font-semibold py-12">
@@ -31,14 +45,14 @@ export default function ClientFilesPanel({ files }) {
               </span>
               <div className="min-w-0">
                 <span className="text-slate-800 font-bold block truncate max-w-[150px] sm:max-w-[200px]">{file.name}</span>
-                <span className="text-[9px] text-slate-450 block mt-0.5">
+                <span className="text-[9px] text-slate-455 block mt-0.5">
                   {file.size || '1.5 MB'} | Uploaded by {file.uploadedBy || 'PM'}
                 </span>
               </div>
             </div>
 
             <button
-              onClick={() => alert(`Downloading shared file: ${file.name}`)}
+              onClick={() => handleDownload(file)}
               className="p-2 bg-white hover:bg-indigo-50 text-slate-450 hover:text-indigo-650 border border-slate-200 hover:border-indigo-200 rounded-xl cursor-pointer shadow-sm transition-all"
               title="Download Shared Resource"
             >

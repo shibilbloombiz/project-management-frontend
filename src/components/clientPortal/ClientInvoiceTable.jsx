@@ -1,8 +1,34 @@
 import React from 'react';
 import { FileText, Download, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { clientPortalHelpers } from '../../utils/clientPortalHelpers';
+import { downloadFormalReportPdf } from '../../utils/pdfExport';
 
 export default function ClientInvoiceTable({ invoices }) {
+  const handleDownloadReceipt = (inv) => {
+    downloadFormalReportPdf({
+      title: 'Invoice Statement',
+      subtitle: `Invoice Ref: ${inv.invoiceId}`,
+      meta: [
+        ['Invoice Ref', inv.invoiceId],
+        ['Date', inv.date || '-'],
+        ['Due Date', inv.dueDate || '-'],
+        ['Amount', `INR ${Number(inv.amount || 0).toLocaleString('en-IN')}`],
+        ['Status', inv.status || '-'],
+        ['Description', inv.desc || 'General Billing']
+      ],
+      sections: [
+        {
+          heading: 'Payment Summary',
+          rows: [
+            `Description: ${inv.desc || 'General Billing'}`,
+            `Total Amount: INR ${Number(inv.amount || 0).toLocaleString('en-IN')}`,
+            `Payment Status: ${inv.status || '-'}`
+          ]
+        }
+      ]
+    }, `invoice_${inv.invoiceId}.pdf`);
+  };
+
   if (!invoices || invoices.length === 0) {
     return (
       <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center text-slate-400 font-semibold py-12">
@@ -56,7 +82,7 @@ export default function ClientInvoiceTable({ invoices }) {
                 <td className="py-3 text-slate-500">{clientPortalHelpers.formatDate(inv.dueDate)}</td>
                 <td className="py-3 text-right">
                   <button 
-                    onClick={() => alert(`Downloading receipt invoice ${inv.invoiceId}...`)}
+                    onClick={() => handleDownloadReceipt(inv)}
                     className="p-1 text-slate-400 hover:text-indigo-600 rounded-lg cursor-pointer transition-colors"
                     title="Download Receipt"
                   >

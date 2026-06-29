@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
+import Tooltip from '../Tooltip';
 
 export default function SubscriptionsTab({ plans, companies, onEditPlan, onDeletePlan }) {
   const sortedPlans = (plans && plans.length > 0) ? [...plans].sort((a, b) => a.price - b.price) : [];
@@ -16,20 +17,22 @@ export default function SubscriptionsTab({ plans, companies, onEditPlan, onDelet
               
               {/* Edit & Delete Action Panel (Revealed on hover) */}
               <div className="absolute top-3 right-3 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => onEditPlan(plan)}
-                  className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
-                  title="Edit Package Details"
-                >
-                  <Edit size={12} />
-                </button>
-                <button 
-                  onClick={() => onDeletePlan(plan._id || plan.id)}
-                  className="p-1.5 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-                  title="Remove Plan"
-                >
-                  <Trash2 size={12} />
-                </button>
+                <Tooltip text="Edit Package Details">
+                  <button 
+                    onClick={() => onEditPlan(plan)}
+                    className="p-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+                  >
+                    <Edit size={12} />
+                  </button>
+                </Tooltip>
+                <Tooltip text="Remove Plan">
+                  <button 
+                    onClick={() => onDeletePlan(plan._id || plan.id)}
+                    className="p-1.5 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 rounded-lg text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </Tooltip>
               </div>
 
               <div>

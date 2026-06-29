@@ -64,6 +64,10 @@ export default function EmployeePortal({
           "Authorization": `Bearer ${token}`
         }
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       if (res.ok && data.success) {
         setTasks(data.data);
@@ -193,6 +197,7 @@ export default function EmployeePortal({
           }
           return t;
         }));
+        await fetchTasks();
       } else {
         alert(data.message || "Failed to update task.");
       }
