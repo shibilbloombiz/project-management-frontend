@@ -19,8 +19,9 @@ export default function AddEmployeeModal({
   const [error, setError] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailStatus, setEmailStatus] = useState('');
+  const [successData, setSuccessData] = useState(null);
 
-  if (!isOpen) return null;
+  if (!isOpen && !successData) return null;
 
   const isLead = role === 'Project Lead' || role === 'project_lead';
   const portalUrl = isLead
@@ -101,8 +102,7 @@ export default function AddEmployeeModal({
         }
       }
 
-      onAddSuccess?.(data.data);
-      handleClose();
+      setSuccessData({ employee: data.data, emailSent: data.emailSent });
     } catch (err) {
       setError(err.message || 'An error occurred during submission.');
     } finally {
@@ -152,6 +152,7 @@ Temporary Password: ${password}`;
 
       if (response.ok && data.success) {
         setEmailStatus('success');
+        alert('Invitation email sent successfully!');
       } else {
         setEmailStatus('error');
       }
@@ -162,6 +163,52 @@ Temporary Password: ${password}`;
       setIsSendingEmail(false);
     }
   };
+
+  if (successData) {
+    const isSent = successData.emailSent;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm text-left">
+        <div className="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-5 text-center">
+          {isSent ? (
+            <>
+              <div className="mx-auto w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-2xl font-bold">
+                ✓
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-800">Employee Created Successfully</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Employee account has been created.<br />
+                Login credentials have been sent to<br />
+                <strong className="text-slate-700">{email}</strong>
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 text-2xl font-bold">
+                ⚠
+              </div>
+              <h3 className="text-sm font-extrabold text-slate-800">Employee Created</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Employee has been created successfully.<br />
+                However, we could not send the email.<br />
+                Please resend later.
+              </p>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              onAddSuccess?.(successData.employee);
+              setSuccessData(null);
+              handleClose();
+            }}
+            className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-md shadow-indigo-100 transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm text-left">

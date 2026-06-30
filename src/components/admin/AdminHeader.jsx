@@ -64,29 +64,9 @@ export default function AdminHeader({
         </div>
       </div>
 
-      {/* Center Search Input */}
-      <div className="hidden md:flex items-center max-w-md w-full mx-6 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2">
-        <Search size={16} className="text-slate-400 mr-2" />
-        <input 
-          type="text" 
-          placeholder="Search registry databases... (e.g. Acme, Active, Paid)" 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="bg-transparent text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none w-full font-medium"
-        />
-      </div>
-
       {/* Right Action Icons & User Dropdown */}
       <div className="flex items-center space-x-4">
         <ThemeToggle compact />
-
-        <button 
-          onClick={onOpenAi}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center space-x-1.5 cursor-pointer shadow-md shadow-indigo-100 transition-colors"
-        >
-          <Sparkles size={13} fill="currentColor" />
-          <span>AI Assistant</span>
-        </button>
 
         <div className="relative">
           <button 

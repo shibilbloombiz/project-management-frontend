@@ -35,6 +35,11 @@ export default function SuperAdminDashboard({
     setStatusFilter("All");
     setIsSidebarOpen(false);
   }, [activeTab]);
+
+  useEffect(() => {
+    const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+    document.title = `Syncra - Super Admin | ${tabLabel}`;
+  }, [activeTab]);
   const [showAiModal, setShowAiModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);

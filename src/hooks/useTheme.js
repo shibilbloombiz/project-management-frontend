@@ -35,12 +35,10 @@ export default function useTheme() {
     theme,
     isDark: theme === 'dark',
     toggleTheme: () => {
-      setTheme((current) => {
-        const next = current === 'dark' ? 'light' : 'dark';
-        localStorage.setItem(THEME_KEY, next);
-        window.dispatchEvent(new Event('syncra-theme-change'));
-        return next;
-      });
+      const next = theme === 'dark' ? 'light' : 'dark';
+      setTheme(next);
+      localStorage.setItem(THEME_KEY, next);
+      window.dispatchEvent(new Event('syncra-theme-change'));
     },
     setTheme: (nextTheme) => {
       setTheme(nextTheme);

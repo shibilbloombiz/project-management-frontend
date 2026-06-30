@@ -369,10 +369,10 @@ export default function useCompanyAdminDashboard(userEmail, companyId, initialOr
   };
 
   const notifications = useMemo(() => {
-    return buildNotifications({ leaves, projects, messages }).filter(
+    return buildNotifications({ leaves, projects, messages, employees, attendance }).filter(
       (item) => !dismissedIds.includes(item.id)
     );
-  }, [leaves, projects, messages, dismissedIds]);
+  }, [leaves, projects, messages, employees, attendance, dismissedIds]);
 
   const saveDismissed = (ids) => {
     setDismissedIds(ids);
