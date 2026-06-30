@@ -54,6 +54,11 @@ export default function CompanyAdminDashboard({
     setIsSidebarOpen(false);
   }, [activeTab]);
 
+  useEffect(() => {
+    const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+    document.title = `Syncra - ${org || 'Company Admin'} | ${tabLabel}`;
+  }, [activeTab, org]);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans transition-colors duration-200">
       <CompanyTopNav

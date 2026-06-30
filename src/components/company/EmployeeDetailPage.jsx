@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../config';
-import { ArrowLeft, User, Briefcase, CheckCircle2, Clock, Calendar, Download, CalendarClock } from 'lucide-react';
+import { ArrowLeft, User, Briefcase, CheckCircle2, Clock, Calendar, Download, CalendarClock, Key } from 'lucide-react';
+import AttendancePage from '../Attendance/AttendancePage';
 
 const STATUS_COLORS = {
   Done: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -30,6 +31,33 @@ const getTaskBucket = (status) => {
 export default function EmployeeDetailPage({ employee, token, onBack, attendance, leaves, onMarkAttendance }) {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [viewingLog, setViewingLog] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendCredentials = async () => {
+    if (!employee) return;
+    setIsResending(true);
+    try {
+      const res = await fetch(`${BASE}/api/employees/${empId}/resend-credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(data.message || 'Credentials resent successfully.');
+      } else {
+        alert(data.message || 'Failed to resend credentials.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while resending credentials.');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     if (!employee) return;
@@ -76,6 +104,18 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
 
   const empId = employee._id || employee.id;
 
+  if (viewingLog) {
+    return (
+      <AttendancePage 
+        token={token} 
+        employeeEmail={employee.email} 
+        employeeId={empId}
+        onBack={() => setViewingLog(false)}
+        isAdminView={true}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 text-left pb-12">
 
@@ -106,6 +146,12 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
             <CalendarClock size={13} className="text-indigo-500" /> Mark Attendance
           </button>
           <button
+            onClick={() => setViewingLog(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl border border-blue-100 cursor-pointer transition-colors"
+          >
+            <Clock size={13} /> View Attendance Log
+          </button>
+          <button
             onClick={() => downloadReport(`${BASE}/api/employees/${empId}/attendance/report`, 'attendance_report.pdf')}
             className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-100 cursor-pointer"
           >
@@ -116,6 +162,13 @@ export default function EmployeeDetailPage({ employee, token, onBack, attendance
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs rounded-xl border border-emerald-100 cursor-pointer"
           >
             <Download size={13} /> Payment Report
+          </button>
+          <button
+            onClick={handleResendCredentials}
+            disabled={isResending}
+            className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-100 cursor-pointer disabled:opacity-50 transition-colors"
+          >
+            <Key size={13} /> {isResending ? 'Resending...' : 'Resend Credentials'}
           </button>
         </div>
       </div>

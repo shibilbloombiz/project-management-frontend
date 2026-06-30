@@ -39,6 +39,20 @@ function App() {
       .catch(err => console.error('Failed to fetch pricing plans in App.jsx:', err));
   }, []);
 
+  useEffect(() => {
+    if (view === 'landing') {
+      document.title = 'Syncra';
+    } else if (view === 'login') {
+      document.title = 'Syncra - Log In';
+    } else if (view === 'register') {
+      document.title = 'Syncra - Register Company';
+    } else if (view === 'plan-selection') {
+      document.title = 'Syncra - Plan Selection';
+    } else if (view === 'share') {
+      document.title = 'Syncra - Shared Board';
+    }
+  }, [view]);
+
   // Sync state with session storage to handle reloads
   useEffect(() => {
     const path = window.location.pathname;

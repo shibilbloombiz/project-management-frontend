@@ -52,6 +52,8 @@ const tabs = [
   { id: 'profile', label: 'Profile', icon: User, component: EmployeeProfile },
 ];
 
+const sidebarTabs = tabs.filter(tab => tab.id !== 'leaves');
+
 const getDismissedNotifications = () => {
   try {
     return JSON.parse(localStorage.getItem('dismissed_notifications') || '[]');
@@ -75,6 +77,11 @@ export default function EmployeeDashboard({ onBackToLanding }) {
     () => notifications.filter((item) => !dismissedIds.includes(item.id)),
     [dismissedIds, notifications]
   );
+
+  useEffect(() => {
+    const tabLabel = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+    document.title = `Syncra - Employee Portal | ${tabLabel}`;
+  }, [activeTab]);
 
   const fetchProfile = useCallback(async (authToken) => {
     setLoadingProfile(true);
@@ -239,7 +246,7 @@ export default function EmployeeDashboard({ onBackToLanding }) {
 
       <div className="flex flex-1 min-h-0">
         <EmployeeSidebar
-          tabs={tabs}
+          tabs={sidebarTabs}
           activeTab={activeTab}
           onSelectTab={handleTabSelect}
           onLogout={handleLogout}
@@ -248,7 +255,7 @@ export default function EmployeeDashboard({ onBackToLanding }) {
 
         {mobileMenuOpen && (
           <MobileMenu
-            tabs={tabs}
+            tabs={sidebarTabs}
             activeTab={activeTab}
             onSelectTab={handleTabSelect}
             onClose={() => setMobileMenuOpen(false)}
@@ -274,6 +281,7 @@ export default function EmployeeDashboard({ onBackToLanding }) {
                 employeeEmail={userProfile?.email}
                 onRefreshProfile={() => fetchProfile(token)}
                 onAttendanceChange={setIsCheckedIn}
+                onNavigateTab={(tabId) => setActiveTab(tabId)}
               />
             </section>
           </div>

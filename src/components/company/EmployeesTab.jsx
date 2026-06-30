@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../config';
 import { downloadFormalReportPdf } from '../../utils/pdfExport';
 import MarkAttendancePage from './MarkAttendancePage';
 import Tooltip from '../Tooltip';
+import AttendancePage from '../Attendance/AttendancePage';
 export default function EmployeesTab({
   employees,
   attendance = [],
@@ -28,6 +29,8 @@ export default function EmployeesTab({
   const [showSendLinkMenu, setShowSendLinkMenu] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterType, setFilterType] = useState('today');
+  const [filterName, setFilterName] = useState('');
+  const [viewingEmployeeLog, setViewingEmployeeLog] = useState(null);
 
   useEffect(() => {
     if (attendanceMarkEmail) {
@@ -125,6 +128,10 @@ export default function EmployeesTab({
 
   const todayKey = toDateKey(new Date());
   const filteredAttendance = attendance.filter(log => {
+    if (filterName && !log.name?.toLowerCase().includes(filterName.toLowerCase())) {
+      return false;
+    }
+    
     const logDateKey = getLogDateKey(log.date);
     if (filterType === 'all') return true;
     
@@ -232,6 +239,18 @@ export default function EmployeesTab({
       ]
     }, `attendance_report_${org.toLowerCase().replace(/\s+/g, '_')}.pdf`);
   };
+
+  if (viewingEmployeeLog) {
+    return (
+      <AttendancePage 
+        token={token} 
+        employeeEmail={viewingEmployeeLog.email} 
+        employeeId={viewingEmployeeLog._id || viewingEmployeeLog.id}
+        onBack={() => setViewingEmployeeLog(null)}
+        isAdminView={true}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8 text-left">
@@ -466,6 +485,17 @@ export default function EmployeesTab({
                 </select>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Name:</span>
+                <input
+                  type="text"
+                  placeholder="Filter by name..."
+                  value={filterName}
+                  onChange={(e) => setFilterName(e.target.value)}
+                  className="bg-slate-55 bg-slate-50 dark:bg-slate-850 border border-slate-205 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
               {filterType === 'date' && (
                 <input
                   type="date"
@@ -500,7 +530,17 @@ export default function EmployeesTab({
                   {filteredAttendance.map((log) => (
                     <tr key={log._id || log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-medium text-slate-400 dark:text-slate-500">{log.date}</td>
-                      <td className="py-3.5 px-4 font-extrabold text-slate-800 dark:text-white">{log.name}</td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          onClick={() => {
+                            const emp = employees.find(e => e.email.toLowerCase() === log.email.toLowerCase()) || { name: log.name, email: log.email };
+                            setViewingEmployeeLog(emp);
+                          }}
+                          className="font-extrabold text-slate-800 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors"
+                        >
+                          {log.name}
+                        </span>
+                      </td>
                       <td className="py-3.5 px-4 text-emerald-600 dark:text-emerald-450 font-mono font-bold flex items-center">
                         <Clock size={10} className="mr-1" /> {log.checkIn}
                       </td>
@@ -649,7 +689,7 @@ function GPSGeofencingSettings({ companyDetails, token, onRefresh }) {
         alert("Failed to retrieve your location. Please check browser GPS permissions.");
         setDetecting(false);
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
     );
   };
 

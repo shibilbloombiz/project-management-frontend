@@ -9,10 +9,15 @@ import {
   Loader2,
   TimerReset,
   X,
+  CalendarDays,
+  Calendar,
 } from "lucide-react";
 import { API_BASE_URL } from "../../config";
+import AttendancePage from "../Attendance/AttendancePage";
+import AttendanceLogButton from "../Attendance/components/AttendanceLogButton";
 
-export default function EmployeeAttendance({ token, onAttendanceChange }) {
+export default function EmployeeAttendance({ token, onAttendanceChange, onNavigateTab }) {
+  const [viewMode, setViewMode] = useState('check'); // 'check' | 'log'
   const [todayRecord, setTodayRecord] = useState(null);
   const [attendancePortal, setAttendancePortal] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -68,7 +73,7 @@ export default function EmployeeAttendance({ token, onAttendanceChange }) {
               longitude: position.coords.longitude,
             }),
           () => resolve(null),
-          { enableHighAccuracy: true, timeout: 8000 }
+          { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
         );
       });
     } catch {
@@ -156,6 +161,15 @@ export default function EmployeeAttendance({ token, onAttendanceChange }) {
     }
   };
 
+  if (viewMode === 'log') {
+    return (
+      <AttendancePage 
+        token={token} 
+        onBack={() => setViewMode('check')} 
+      />
+    );
+  }
+
   return (
     <div className="relative space-y-6 text-slate-900 dark:text-slate-100">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -222,7 +236,7 @@ export default function EmployeeAttendance({ token, onAttendanceChange }) {
           />
           <AttendanceButton
             action="checkOut"
-            disabled={!isPortalOpen || !isActiveSession || initialLoading || submitting}
+            disabled={!isActiveSession || initialLoading || submitting}
             loading={submitting && activeAction === "checkOut"}
             onClick={() => markAttendance("checkOut")}
           />
@@ -235,22 +249,42 @@ export default function EmployeeAttendance({ token, onAttendanceChange }) {
               Loading attendance...
             </div>
           ) : (
-            <div className="mx-auto grid max-w-2xl grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950/30 sm:grid-cols-2">
-              <TimeTile
-                icon={<ArrowRightToLine size={20} />}
-                label="Check In"
-                time={todayRecord?.checkIn || "--"}
-                caption={todayRecord?.date || "Not checked in yet"}
-                tone="emerald"
-              />
-              <TimeTile
-                icon={<ArrowLeftFromLine size={20} />}
-                label="Check Out"
-                time={todayRecord?.checkOut || "--"}
-                caption={todayRecord?.checkOut ? todayRecord?.date : "Not checked out yet"}
-                tone="indigo"
-                divided
-              />
+            <div className="space-y-4">
+              <div className="mx-auto grid max-w-2xl grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950/30 sm:grid-cols-2">
+                <TimeTile
+                  icon={<ArrowRightToLine size={20} />}
+                  label="Check In"
+                  time={todayRecord?.checkIn || "--"}
+                  caption={todayRecord?.date || "Not checked in yet"}
+                  tone="emerald"
+                />
+                <TimeTile
+                  icon={<ArrowLeftFromLine size={20} />}
+                  label="Check Out"
+                  time={todayRecord?.checkOut || "--"}
+                  caption={todayRecord?.checkOut ? todayRecord?.date : "Not checked out yet"}
+                  tone="indigo"
+                  divided
+                />
+              </div>
+              <div className="flex flex-wrap justify-center gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('log')}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 hover:border-slate-350 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+                >
+                  <CalendarDays size={14} className="text-blue-500 shrink-0" />
+                  Attendance Log
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab && onNavigateTab('leaves')}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 hover:border-slate-350 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+                >
+                  <Calendar size={14} className="text-indigo-500 shrink-0" />
+                  Leave Request
+                </button>
+              </div>
             </div>
           )}
         </div>

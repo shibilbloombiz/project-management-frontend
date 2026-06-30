@@ -5,7 +5,74 @@ export const authHeaders = (json = false) => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
-export function buildNotifications({ leaves = [], projects = [], messages = [] }) {
+function getConsecutiveAbsences(employeeEmail, attendanceList, leavesList) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  let consecutiveCount = 0;
+  let dayOffset = 1; // start from yesterday
+  
+  const parseDateStr = (dateStr) => {
+    if (!dateStr) return null;
+    const isoMatch = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3]));
+    }
+    return new Date(dateStr);
+  };
+
+  while (dayOffset <= 30) {
+    const checkDate = new Date();
+    checkDate.setDate(today.getDate() - dayOffset);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    const isWeekend = checkDate.getDay() === 0 || checkDate.getDay() === 6;
+    if (isWeekend) {
+      dayOffset++;
+      continue;
+    }
+    
+    // Check if on approved leave
+    const onLeave = leavesList.some(l => {
+      if (l.email.toLowerCase() !== employeeEmail.toLowerCase() || l.status !== 'Approved') return false;
+      const start = parseDateStr(l.startDate);
+      const end = parseDateStr(l.endDate);
+      if (!start || !end) return false;
+      start.setHours(0, 0, 0, 0);
+      end.setHours(0, 0, 0, 0);
+      return checkDate >= start && checkDate <= end;
+    });
+    
+    if (onLeave) {
+      consecutiveCount = 0;
+      dayOffset++;
+      continue;
+    }
+    
+    // Check if check-in exists
+    const hasCheckedIn = attendanceList.some(a => {
+      if (a.email.toLowerCase() !== employeeEmail.toLowerCase()) return false;
+      const dbDate = parseDateStr(a.date);
+      return dbDate &&
+             dbDate.getFullYear() === checkDate.getFullYear() &&
+             dbDate.getMonth() === checkDate.getMonth() &&
+             dbDate.getDate() === checkDate.getDate();
+    });
+    
+    if (hasCheckedIn) {
+      break;
+    } else {
+      consecutiveCount++;
+      if (consecutiveCount >= 3) {
+        return consecutiveCount;
+      }
+    }
+    dayOffset++;
+  }
+  return consecutiveCount;
+}
+
+export function buildNotifications({ leaves = [], projects = [], messages = [], employees = [], attendance = [] }) {
   return [
     ...leaves
       .filter((leave) => leave.status === 'Pending')
@@ -38,6 +105,16 @@ export function buildNotifications({ leaves = [], projects = [], messages = [] }
         title: `Client Message: ${msg.senderName}`,
         desc: msg.text || 'Shared an attachment',
         tab: 'messages',
+      })),
+
+    ...employees
+      .filter(emp => getConsecutiveAbsences(emp.email, attendance, leaves) >= 3)
+      .map(emp => ({
+        id: `absent_consec_${emp.email.toLowerCase()}`,
+        type: 'absence_alert',
+        title: 'Consecutive Absence Alert',
+        desc: `${emp.name} has been absent for 3 or more consecutive workdays.`,
+        tab: 'employees',
       })),
   ];
 }
